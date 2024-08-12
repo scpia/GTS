@@ -1,4 +1,13 @@
 html, body {
     height: 100%;
     width: 100%;
+    text-align: center;
+}
+#quiz-container{
+    margin-top: 15px;
+    padding: 10px;
+}
+
+.questions{
+    align-items: left;
 }

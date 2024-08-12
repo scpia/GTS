@@ -32,7 +32,7 @@ fetch('/quiz')
 
         data.results.forEach((question, index) => {
             const questionElement = document.createElement('div');
-            questionElement.innerHTML = `<p>${index + 1}. ${question.question}</p>`;
+            questionElement.innerHTML = `<p class="questions">${index + 1}. ${question.question}</p>`;
             
             question.incorrect_answers.forEach(option => {
                 questionElement.innerHTML += `<input type="radio" name="q${index}" value="${option}"> ${option}<br>`;
