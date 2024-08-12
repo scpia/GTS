@@ -4,10 +4,19 @@ html, body {
     text-align: center;
 }
 #quiz-container{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
     margin-top: 15px;
     padding: 10px;
 }
-
+.single-Questions{
+    text-align: left;
+    border: 1px solid black;
+    padding: 5px;
+    margin-bottom: 20px;
+}
 .questions{
     align-items: left;
 }

@@ -13,7 +13,6 @@ fetch('/quiz')
             container.appendChild(questionElement);
         });
     }); */
-
     const apiUrl = "https://opentdb.com/api.php?amount=10"
 
     fetch(apiUrl)
@@ -32,6 +31,7 @@ fetch('/quiz')
 
         data.results.forEach((question, index) => {
             const questionElement = document.createElement('div');
+            questionElement.classList.add("single-Questions");
             questionElement.innerHTML = `<p class="questions">${index + 1}. ${question.question}</p>`;
             
             question.incorrect_answers.forEach(option => {
@@ -49,3 +49,25 @@ fetch('/quiz')
     .catch(error => {
         console.error('There was a problem with the fetch operation:', error);
     });
+
+    window.addEventListener('load', function() {
+        // Alle Elemente mit der Klasse 'item' auswählen
+        const items = document.querySelectorAll('.single-Questions');
+        
+        // Die maximale Breite der Elemente finden
+        let maxWidth = 0;
+        items.forEach(item => {
+            // Temporäre Breite des Elements messen
+            const width = item.getBoundingClientRect().width;
+            if (width > maxWidth) {
+                maxWidth = width;
+            }
+        });
+    
+        // Alle Elemente auf die maximale Breite setzen
+        items.forEach(item => {
+            item.style.width = `${maxWidth}px`;
+        });
+    });
+    
+    
