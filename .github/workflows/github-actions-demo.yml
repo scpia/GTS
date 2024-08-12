@@ -21,7 +21,7 @@ jobs:
 
     - name: Deploy to server
       run: |
-        ssh -o StrictHostKeyChecking=no dev@194.164.61.105 '
+        ssh -o StrictHostKeyChecking=no root@194.164.61.105 '
         cd /var/www/html/GTS &&
         git pull origin main &&
         npm install &&
