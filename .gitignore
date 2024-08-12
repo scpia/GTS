@@ -129,6 +129,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+# Ignoriere die Konfigurationsdatei der virtuellen Umgebung
 pyvenv.cfg
 # Spyder project settings
 .spyderproject
