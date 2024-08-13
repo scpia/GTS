@@ -1,4 +1,4 @@
-name: Deploy to Web Server
+name: Deploy to Server
 
 on:
   push:
