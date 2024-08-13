@@ -8,9 +8,20 @@ def load_questions():
         questions = json.load(f)
     return questions
 
+
 @app.route('/')
+def menü():
+    return render_template('menü.html')
+
+
+@app.route('/quiz-fragen')
 def index():
     return render_template('index.html')
+
+
+@app.route('/musik-fragen')
+def musik_fragen():
+    return render_template('musik-fragen.html')
 
 @app.route('/quiz')
 def quiz():
