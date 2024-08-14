@@ -71,7 +71,7 @@ def get_spotify_client():
 
 def get_random_track(sp):
     # Use a random search keyword or genre
-    random_keywords = ['Kollegah', 'Spongebozz']
+    random_keywords = ['Kollegah']
     keyword = random.choice(random_keywords)
 
     results = sp.search(q=keyword, type='track', limit=50)
@@ -83,7 +83,25 @@ def get_random_track(sp):
     if not tracks_with_preview:
         return None  # Handle case when no tracks with a preview are found
 
-    return random.choice(tracks_with_preview)
+    # Get Tracks that have been played already in current session
+    played_tracks = session.get('played_tracks', [])
+
+    tracks_to_choose_from = [track for track in tracks_with_preview if track['id'] not in played_tracks]
+
+    if not tracks_to_choose_from:
+        # If all tracks have been played, clear the session or reset it for the user
+        session['played_tracks'] = []
+        # You could also add logic here to fetch new tracks or retry with a different keyword
+        #return get_random_track(sp)  # Retry to get a fresh set of tracks
+
+    # Select a random track that hasn't been played yet
+    selected_track = random.choice(tracks_to_choose_from)
+    
+    # Update the session with the ID of the selected track
+    played_tracks.append(selected_track['id'])
+    session['played_tracks'] = played_tracks
+
+    return selected_track
 
 @app.route('/spotify-quiz', methods=['GET', 'POST'])
 def spotify_quiz():
