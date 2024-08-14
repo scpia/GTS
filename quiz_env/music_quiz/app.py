@@ -3,14 +3,17 @@ from spotipy.oauth2 import SpotifyOAuth
 import json
 import spotipy
 import random
+import logging
 
+
+logging.basicConfig(level=logging.DEBUG)
 app = Flask(__name__)
-#app.secret_key = "your_secret_key"  # Replace with your own secret key
+app.secret_key = "PaulIstEinHs"  # Replace with your own secret key
 
 # Spotify Auth Details
 SPOTIPY_CLIENT_ID = "197fae76c16941eeb1004bb32363434d"  # Replace with your Spotify Client ID
 SPOTIPY_CLIENT_SECRET = "eed38db9ad374edb80efe73526291d9e"  # Replace with your Spotify Client Secret
-SPOTIPY_REDIRECT_URI = "http://localhost:5000/callback"
+SPOTIPY_REDIRECT_URI = "http://127.0.0.1:5000/callback"
 
 sp_oauth = SpotifyOAuth(SPOTIPY_CLIENT_ID, SPOTIPY_CLIENT_SECRET, SPOTIPY_REDIRECT_URI,
                         scope="user-library-read user-top-read")
@@ -37,7 +40,7 @@ def quiz():
     questions = load_questions()
     return jsonify(questions)
 
-
+##################################################
 # Spotify Authentication Route
 @app.route('/spotify-login')
 def spotify_login():
@@ -61,14 +64,20 @@ def callback():
     session["token_info"] = token_info
     return redirect(url_for('spotify_quiz'))
 
+@app.route('/test')
+def test():
+    return render_template('spotify_quiz.html', preview_url=None)
+
+
+
 
 def get_spotify_client():
     token_info = session.get("token_info", None)
     if not token_info:
-        return redirect(url_for('spotify_login'))
+        # Redirect to Spotify login if token is not found
+        return None
     sp = spotipy.Spotify(auth=token_info['access_token'])
     return sp
-
 
 def get_random_track(sp):
     # Use a random search keyword or genre
@@ -87,24 +96,30 @@ def get_random_track(sp):
 @app.route('/spotify-quiz', methods=['GET', 'POST'])
 def spotify_quiz():
     sp = get_spotify_client()
+    
+    if sp is None:
+        logging.debug("Spotify client is None, redirecting to login")
+        return redirect(url_for('spotify_login'))
 
     if request.method == 'GET':
-        track = get_random_track(sp)
+        try:
+            track = get_random_track(sp)
+            if not track:
+                flash("No tracks found! Please try again.", "danger")
+                return redirect(url_for('spotify_quiz'))
 
-        if not track:
-            flash("No tracks found! Please try again.", "danger")
+            session['track_name'] = track['name'].lower()
+            session['track_artist'] = track['artists'][0]['name'].lower()
+            session['track_preview'] = track['preview_url']
+            return render_template('spotify_quiz.html', preview_url=session['track_preview'])
+        except Exception as e:
+            logging.error(f"An error occurred: {e}")
+            flash(f"An error occurred: {e}", "danger")
             return redirect(url_for('spotify_quiz'))
-
-        session['track_name'] = track['name'].lower()
-        session['track_artist'] = track['artists'][0]['name'].lower()
-        session['track_preview'] = track['preview_url']
-
-        return render_template('spotify_quiz.html', preview_url=session['track_preview'])
 
     elif request.method == 'POST':
         user_song_name = request.form.get('song_name', '').strip().lower()
         user_artist_name = request.form.get('artist_name', '').strip().lower()
-
         correct_song_name = session.get('track_name')
         correct_artist_name = session.get('track_artist')
 
