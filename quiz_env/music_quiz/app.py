@@ -92,7 +92,7 @@ def get_random_track(sp):
         # If all tracks have been played, clear the session or reset it for the user
         session['played_tracks'] = []
         # You could also add logic here to fetch new tracks or retry with a different keyword
-        #return get_random_track(sp)  # Retry to get a fresh set of tracks
+        return get_random_track(sp)  # Retry to get a fresh set of tracks
 
     # Select a random track that hasn't been played yet
     selected_track = random.choice(tracks_to_choose_from)
