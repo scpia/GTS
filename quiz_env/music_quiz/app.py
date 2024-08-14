@@ -43,5 +43,13 @@ def quiz():
         return jsonify(questions)
     return jsonify({"error": "Category ID not provided"})
 
+@app.route('/categories', methods=['GET'])
+def get_categories():
+    try:
+        with open('quiz_env/music_quiz/categories.json', 'r') as file:
+            categories = json.load(file)
+        return jsonify(categories)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 if __name__ == '__main__':
     app.run(debug=True)
