@@ -7,8 +7,9 @@ const fetchCategories = async () => {
 
   categories.forEach((category) => {
     const button = document.createElement("a");
-    button.href = `/quiz-fragen/${category.id}`;
+    button.href = `/quiz-fragen/${category.id}?category=${category.id}`;
     button.className = "menu-button";
+    console.log(category)
     button.textContent = category.name;
     menuContainer.appendChild(button);
   });

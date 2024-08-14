@@ -2,12 +2,17 @@ body {
   font-family: Open Sans;
   margin: 0;
   padding: 20px;
-  background-color: #2c3e50;
+
 }
 
 h1 {
+  font-family: 'Merriweather', serif;
+  font-size: 3rem;
+  color: #2c3e50;
   text-align: center;
-  margin-bottom: 20px;
+  margin: 20px 0;
+  font-weight: bold;
+  letter-spacing: 2px;
 }
 
 #quiz-container {
@@ -22,7 +27,17 @@ h1 {
   padding: 5px;
   gap: 20px; /* Abstand zwischen den Frageboxen */
 }
-
+.question{
+  background-color: #27ae60;
+  color: white;
+  margin: 5px;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 5px;
+  font-size: 16px;
+  cursor: pointer;
+  box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.2) 
+}
 .question-box {
   flex: 1 1 45%; /* Jedes Element nimmt etwa 45% der Breite ein */
   background-color: #fff;

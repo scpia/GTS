@@ -1,4 +1,37 @@
 #categories-menu {
-  display: flex;
-  flex-direction: column;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .titel-themen-auswahl {
+      font-family: 'Merriweather', serif;
+      font-size: 3rem;
+      color: #2c3e50;
+      text-align: center;
+      margin: 20px 0;
+      font-weight: bold;
+      letter-spacing: 2px;
+    }
+    
+
+.menu-button {
+  background-color: #27ae60;
+  color: white;
+  margin: 5px;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 5px;
+  font-size: 16px;
+  cursor: pointer;
+  box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.2);
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.menu-button:active {
+  transform: translateY(4px);
+  box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.2);
+}
+.menu-button:hover{
+  background-color: #13793ec6;
 }
