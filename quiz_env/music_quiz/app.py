@@ -71,7 +71,7 @@ def get_spotify_client():
 
 def get_random_track(sp):
     # Use a random search keyword or genre
-    random_keywords = ['Kollegah']
+    random_keywords = ['NL 28']
     keyword = random.choice(random_keywords)
 
     results = sp.search(q=keyword, type='track', limit=50)
@@ -148,7 +148,7 @@ def search():
     if sp is None:
         return jsonify({'songs': []}), 401  # Nicht authentifiziert
 
-    results = sp.search(q=query, type='track', limit=5)
+    results = sp.search(q=query, type='track', limit=10)
     tracks = results['tracks']['items']
     songs = [{'name': track['name'], 
               'artist': track['artists'][0]['name'], 
