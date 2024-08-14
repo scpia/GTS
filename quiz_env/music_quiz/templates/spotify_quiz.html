@@ -3,7 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spotify Quiz</title>
+    <title>Guess the Song</title>
+    <style>
+        /* Einfaches Styling für das Dropdown-Menü */
+        #suggestions {
+            border: 1px solid #ccc;
+            max-height: 150px;
+            overflow-y: auto;
+            position: absolute;
+            background-color: white;
+            width: 300px;
+            z-index: 1000;
+        }
+
+        .suggestion-item {
+            padding: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+
+        .suggestion-item img {
+            width: 40px;
+            height: 40px;
+            margin-right: 10px;
+        }
+
+        .suggestion-item:hover {
+            background-color: #f0f0f0;
+        }
+    </style>
 </head>
 <body>
     <h1>Guess the Song</h1>
@@ -27,14 +56,39 @@
 
     <form action="{{ url_for('spotify_quiz') }}" method="POST">
         <div>
-            <label for="song_name">Song Name:</label>
-            <input type="text" id="song_name" name="song_name" required>
-        </div>
-        <div>
-            <label for="artist_name">Artist Name:</label>
-            <input type="text" id="artist_name" name="artist_name" required>
+            <label for="song_guess">Guess the Song and Artist:</label>
+            <input type="text" id="song_guess" name="song_guess" required autocomplete="off">
+            <div id="suggestions"></div>
         </div>
         <input type="submit" value="Submit">
     </form>
+
+    <script>
+        document.getElementById('song_guess').addEventListener('input', function() {
+            let query = this.value;
+
+            if (query.length > 2) {  // Start searching after 2 characters
+                fetch(`/search?q=${query}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        let suggestions = document.getElementById('suggestions');
+                        suggestions.innerHTML = '';  // Clear previous suggestions
+
+                        data.songs.forEach(song => {
+                            let item = document.createElement('div');
+                            item.classList.add('suggestion-item');
+                            item.innerHTML = `<img src="${song.album_cover}" alt="Album cover"><span>${song.name} - ${song.artist}</span>`;
+                            item.onclick = function() {
+                                document.getElementById('song_guess').value = `${song.name} - ${song.artist}`;
+                                suggestions.innerHTML = '';  // Clear suggestions after selection
+                            };
+                            suggestions.appendChild(item);
+                        });
+                    });
+            } else {
+                document.getElementById('suggestions').innerHTML = '';  // Clear suggestions if query is too short
+            }
+        });
+    </script>
 </body>
 </html>

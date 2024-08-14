@@ -5,7 +5,6 @@ import spotipy
 import random
 import logging
 
-
 logging.basicConfig(level=logging.DEBUG)
 app = Flask(__name__)
 app.secret_key = "PaulIstEinHs"  # Replace with your own secret key
@@ -18,35 +17,29 @@ SPOTIPY_REDIRECT_URI = "http://127.0.0.1:5000/callback"
 sp_oauth = SpotifyOAuth(SPOTIPY_CLIENT_ID, SPOTIPY_CLIENT_SECRET, SPOTIPY_REDIRECT_URI,
                         scope="user-library-read user-top-read")
 
-
 def load_questions():
     with open('test_questions.json') as f:
         questions = json.load(f)
     return questions
 
-
 @app.route('/')
 def menu():
     return render_template('menü.html')
 
-
 @app.route('/quiz-fragen')
 def index():
     return render_template('index.html')
-
 
 @app.route('/quiz')
 def quiz():
     questions = load_questions()
     return jsonify(questions)
 
-##################################################
 # Spotify Authentication Route
 @app.route('/spotify-login')
 def spotify_login():
     auth_url = sp_oauth.get_authorize_url()
     return redirect(auth_url)
-
 
 @app.route('/callback')
 def callback():
@@ -68,9 +61,6 @@ def callback():
 def test():
     return render_template('spotify_quiz.html', preview_url=None)
 
-
-
-
 def get_spotify_client():
     token_info = session.get("token_info", None)
     if not token_info:
@@ -81,17 +71,19 @@ def get_spotify_client():
 
 def get_random_track(sp):
     # Use a random search keyword or genre
-    random_keywords = ['love', 'party', 'happy', 'rock', 'pop', 'jazz', 'chill', 'dance', 'summer']
+    random_keywords = ['Kollegah', 'Spongebozz']
     keyword = random.choice(random_keywords)
 
     results = sp.search(q=keyword, type='track', limit=50)
     tracks = results['tracks']['items']
     
-    if not tracks:
-        return None  # Handle case when no tracks are found
+    # Filter out tracks without a preview URL
+    tracks_with_preview = [track for track in tracks if track['preview_url']]
 
-    return random.choice(tracks)
+    if not tracks_with_preview:
+        return None  # Handle case when no tracks with a preview are found
 
+    return random.choice(tracks_with_preview)
 
 @app.route('/spotify-quiz', methods=['GET', 'POST'])
 def spotify_quiz():
@@ -118,18 +110,33 @@ def spotify_quiz():
             return redirect(url_for('spotify_quiz'))
 
     elif request.method == 'POST':
-        user_song_name = request.form.get('song_name', '').strip().lower()
-        user_artist_name = request.form.get('artist_name', '').strip().lower()
+        user_guess = request.form.get('song_guess', '').strip().lower()
         correct_song_name = session.get('track_name')
         correct_artist_name = session.get('track_artist')
 
-        if user_song_name == correct_song_name and user_artist_name == correct_artist_name:
+        if correct_song_name in user_guess and correct_artist_name in user_guess:
             flash("Correct! Well done!", "success")
         else:
             flash(f"Wrong! The correct answer was '{correct_song_name}' by '{correct_artist_name}'", "danger")
 
         return redirect(url_for('spotify_quiz'))
 
+# Neue Route für die Song-Suche mit Album-Cover
+@app.route('/search')
+def search():
+    query = request.args.get('q')
+    sp = get_spotify_client()
+    
+    if sp is None:
+        return jsonify({'songs': []}), 401  # Nicht authentifiziert
+
+    results = sp.search(q=query, type='track', limit=5)
+    tracks = results['tracks']['items']
+    songs = [{'name': track['name'], 
+              'artist': track['artists'][0]['name'], 
+              'album_cover': track['album']['images'][0]['url']} for track in tracks]
+
+    return jsonify({'songs': songs})
 
 if __name__ == '__main__':
     app.run(debug=True)
