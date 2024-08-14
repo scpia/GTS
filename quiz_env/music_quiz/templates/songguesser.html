@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spotify Quiz</title>
+</head>
+<body>
+    <h1>Guess the Song</h1>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    {% if preview_url %}
+        <audio controls>
+            <source src="{{ preview_url }}" type="audio/mpeg">
+            Your browser does not support the audio element.
+        </audio>
+    {% else %}
+        <p>Sorry, no preview available for this song.</p>
+    {% endif %}
+
+    <form action="{{ url_for('spotify_quiz') }}" method="POST">
+        <div>
+            <label for="song_name">Song Name:</label>
+            <input type="text" id="song_name" name="song_name" required>
+        </div>
+        <div>
+            <label for="artist_name">Artist Name:</label>
+            <input type="text" id="artist_name" name="artist_name" required>
+        </div>
+        <input type="submit" value="Submit">
+    </form>
+</body>
+</html>
