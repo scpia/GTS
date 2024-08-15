@@ -127,10 +127,11 @@ def search_tracks(sp, query):
 def initialize_track_list(sp):
     artist_name = session.get('artist')
     playlist_link = session.get('playlist_link')
+    
     if artist_name:
         results = sp.search(q=f'artist:{artist_name}', type='artist', limit=1)
         artist = results['artists']['items']
-
+        
         if not artist:
             flash(f"No artist found with name '{artist_name}'", "danger")
             return None
@@ -139,43 +140,58 @@ def initialize_track_list(sp):
         albums = sp.artist_albums(artist_id, album_type='album', limit=50)
         album_ids = [album['id'] for album in albums['items']]
 
-        tracks = []
-        for album_id in album_ids:
-            album_tracks = sp.album_tracks(album_id)
-            tracks.extend(album_tracks['items'])
+        # Store album_ids or a reference instead of full tracks
+        session['album_ids'] = album_ids
+        session.modified = True
 
     elif playlist_link:
         playlist_id = extract_playlist_id(playlist_link)
         if not playlist_id:
             flash("Invalid playlist URL.", "danger")
             return None
-
-        tracks = get_all_tracks_from_playlist(sp, playlist_id)
+        
+        # Store playlist_id instead of full tracks
+        session['playlist_id'] = playlist_id
+        session.modified = True
 
     else:
-        random_keywords = ['Farid Bang']
-        keyword = random.choice(random_keywords)
+        # Handle other cases
+        session['search_keyword'] = 'Farid Bang'
+        session.modified = True
+
+def get_tracks_from_session(sp):
+    album_ids = session.get('album_ids')
+    playlist_id = session.get('playlist_id')
+    keyword = session.get('search_keyword')
+
+    if album_ids:
+        # Fetch tracks based on album_ids
+        tracks = []
+        for album_id in album_ids:
+            album_tracks = sp.album_tracks(album_id)
+            tracks.extend(album_tracks['items'])
+        return tracks
+
+    elif playlist_id:
+        # Fetch tracks based on playlist_id
+        tracks = get_all_tracks_from_playlist(sp, playlist_id)
+        return tracks
+
+    elif keyword:
+        # Fetch tracks based on search keyword
         tracks = search_tracks(sp, keyword)
+        return tracks
 
-    tracks_with_preview = [track for track in tracks if track['preview_url']]
+    return []
 
-    if not tracks_with_preview:
-        flash("No tracks available with previews!", "danger")
-        return None
 
-    # Store the list of tracks in session
-    session['track_list'] = tracks_with_preview
-
-def get_random_track():
-    if 'track_list' not in session or not session['track_list']:
+def get_random_track(sp):
+    tracks = get_tracks_from_session(sp)
+    if not tracks:
         flash("Track list is empty or not initialized. Please restart the quiz.", "danger")
         return None
 
-    # Select a random track from the list
-    track = random.choice(session['track_list'])
-    # Remove the selected track from the list
-    session['track_list'].remove(track)
-
+    track = random.choice(tracks)
     return track
 
 
@@ -192,7 +208,7 @@ def spotify_quiz():
         if 'track_list' not in session:
             initialize_track_list(sp)
         
-        track = get_random_track()
+        track = get_random_track(sp)
         print(track)
         if not track:
             return redirect(url_for('spotify_quiz'))
@@ -214,7 +230,7 @@ def spotify_quiz():
             flash(f"Wrong! The correct answer was '{correct_song_name}' by '{correct_artist_name}'", "danger")
 
         # Continue to the next track
-        track = get_random_track()
+        track = get_random_track(sp)
         if not track:
             flash("No more tracks available! Please refresh the quiz.", "info")
             # Optionally handle case where no tracks are left
