@@ -28,7 +28,7 @@ def load_questions():
 
 @app.route('/')
 def menu():
-    session.clear()
+    #session.clear()
     return render_template('menü.html')
 
 @app.route('/quiz-fragen')
@@ -124,17 +124,16 @@ def search_tracks(sp, query):
              'artist': track['artists'][0]['name'], 
              'album_cover': track['album']['images'][0]['url']} for track in tracks]
 
-def get_random_track(sp):
+def initialize_track_list(sp):
     artist_name = session.get('artist')
     playlist_link = session.get('playlist_link')
-    
     if artist_name:
         results = sp.search(q=f'artist:{artist_name}', type='artist', limit=1)
         artist = results['artists']['items']
 
         if not artist:
             flash(f"No artist found with name '{artist_name}'", "danger")
-            return redirect(url_for('choose'))
+            return None
         
         artist_id = artist[0]['id']
         albums = sp.artist_albums(artist_id, album_type='album', limit=50)
@@ -149,7 +148,7 @@ def get_random_track(sp):
         playlist_id = extract_playlist_id(playlist_link)
         if not playlist_id:
             flash("Invalid playlist URL.", "danger")
-            return redirect(url_for('choose'))
+            return None
 
         tracks = get_all_tracks_from_playlist(sp, playlist_id)
 
@@ -161,21 +160,24 @@ def get_random_track(sp):
     tracks_with_preview = [track for track in tracks if track['preview_url']]
 
     if not tracks_with_preview:
+        flash("No tracks available with previews!", "danger")
         return None
 
-    played_tracks = session.get('played_tracks', [])
+    # Store the list of tracks in session
+    session['track_list'] = tracks_with_preview
 
-    tracks_to_choose_from = [track for track in tracks_with_preview if track['id'] not in played_tracks]
+def get_random_track():
+    if 'track_list' not in session or not session['track_list']:
+        flash("Track list is empty or not initialized. Please restart the quiz.", "danger")
+        return None
 
-    if not tracks_to_choose_from:
-        session['played_tracks'] = []
-        return get_random_track(sp)  # Retry to get a fresh set of tracks
+    # Select a random track from the list
+    track = random.choice(session['track_list'])
+    # Remove the selected track from the list
+    session['track_list'].remove(track)
 
-    selected_track = random.choice(tracks_to_choose_from)
-    played_tracks.append(selected_track['id'])
-    session['played_tracks'] = played_tracks
+    return track
 
-    return selected_track
 
 @app.route('/spotify-quiz', methods=['GET', 'POST'])
 def spotify_quiz():
@@ -186,20 +188,20 @@ def spotify_quiz():
         return redirect(url_for('spotify_login'))
 
     if request.method == 'GET':
-        try:
-            track = get_random_track(sp)
-            if not track:
-                flash("No tracks found! Please try again.", "danger")
-                return redirect(url_for('spotify_quiz'))
-
-            session['track_name'] = track['name'].lower()
-            session['track_artist'] = track['artists'][0]['name'].lower()
-            session['track_preview'] = track['preview_url']
-            return render_template('spotify_quiz.html', preview_url=session['track_preview'])
-        except Exception as e:
-            logging.error(f"An error occurred: {e}")
-            flash(f"An error occurred: {e}", "danger")
+        # Initialize the track list if not already present
+        if 'track_list' not in session:
+            initialize_track_list(sp)
+        
+        track = get_random_track()
+        print(track)
+        if not track:
             return redirect(url_for('spotify_quiz'))
+
+        session['track_name'] = track['name'].lower()
+        session['track_artist'] = track['artists'][0]['name'].lower()
+        session['track_preview'] = track['preview_url']
+        print(f"Session Data (GET): {session}")
+        return render_template('spotify_quiz.html', preview_url=session['track_preview'])
 
     elif request.method == 'POST':
         user_guess = request.form.get('song_guess', '').strip().lower()
@@ -211,7 +213,14 @@ def spotify_quiz():
         else:
             flash(f"Wrong! The correct answer was '{correct_song_name}' by '{correct_artist_name}'", "danger")
 
+        # Continue to the next track
+        track = get_random_track()
+        if not track:
+            flash("No more tracks available! Please refresh the quiz.", "info")
+            # Optionally handle case where no tracks are left
+
         return redirect(url_for('spotify_quiz'))
+
 
 @app.route('/search')
 def search():
