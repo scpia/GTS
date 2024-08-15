@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enter Artist</title>
+    <style>
+        /* Use the same styles as before */
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Enter Artist Name</h1>
+        <form action="{{ url_for('artist') }}" method="POST">
+            <label for="artist_name">Artist Name:</label>
+            <input type="text" id="artist_name" name="artist_name" required autocomplete="off">
+            <input type="submit" value="Submit">
+        </form>
+    </div>
+</body>
+</html>

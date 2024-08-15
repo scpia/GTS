@@ -134,12 +134,12 @@ audio {
     </div>
 
     <script>
-        document.getElementById('audio_player').volume = 0.3;  // Set default volume to 50%
+        document.getElementById('audio_player').volume = 0.3;  // Set default volume to 30%
 
         document.getElementById('song_guess').addEventListener('input', function() {
             let query = this.value;
 
-            if (query.length > 2) {  // Start searching after 2 characters
+            if (query.length > 1) {  // Start searching after 1 characters
                 fetch(`/search?q=${query}`)
                     .then(response => response.json())
                     .then(data => {

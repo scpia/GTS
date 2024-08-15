@@ -1,12 +1,16 @@
 from flask import Flask, render_template, request, jsonify, redirect, session, url_for, flash
+from flask_caching import Cache
 from spotipy.oauth2 import SpotifyOAuth
 import json
 import spotipy
 import random
 import logging
+import re
 
 logging.basicConfig(level=logging.DEBUG)
 app = Flask(__name__)
+cache = Cache(config={'CACHE_TYPE': 'simple'})
+cache.init_app(app)
 app.secret_key = "PaulIstEinHs"  # Replace with your own secret key
 
 # Spotify Auth Details
@@ -24,6 +28,7 @@ def load_questions():
 
 @app.route('/')
 def menu():
+    session.clear()
     return render_template('menü.html')
 
 @app.route('/quiz-fragen')
@@ -55,7 +60,29 @@ def callback():
         return redirect(url_for('spotify_login'))
 
     session["token_info"] = token_info
-    return redirect(url_for('spotify_quiz'))
+    return redirect(url_for('choose'))
+
+@app.route('/choose', methods=['GET', 'POST'])
+def choose():
+    if request.method == 'POST':
+        choice = request.form.get('choice')
+        if choice == 'artist':
+            return redirect(url_for('artist'))
+        elif choice == 'playlist':
+            playlist_link = request.form.get('playlist_link')
+            session['playlist_link'] = playlist_link
+            return redirect(url_for('spotify_quiz'))
+    
+    return render_template('choose.html')
+
+@app.route('/artist', methods=['GET', 'POST'])
+def artist():
+    if request.method == 'POST':
+        artist_name = request.form.get('artist_name')
+        flash(f"Artist '{artist_name}' submitted successfully!", "success")
+        session['artist'] = artist_name
+        return redirect(url_for('spotify_quiz'))
+    return render_template('artist.html')
 
 @app.route('/test')
 def test():
@@ -64,40 +91,87 @@ def test():
 def get_spotify_client():
     token_info = session.get("token_info", None)
     if not token_info:
-        # Redirect to Spotify login if token is not found
         return None
     sp = spotipy.Spotify(auth=token_info['access_token'])
     return sp
 
-def get_random_track(sp):
-    # Use a random search keyword or genre
-    random_keywords = ['NL 28']
-    keyword = random.choice(random_keywords)
+def extract_playlist_id(url):
+    """
+    Extracts the playlist ID from a Spotify playlist URL.
+    """
+    match = re.search(r'playlist/([a-zA-Z0-9]+)', url)
+    if match:
+        return match.group(1)
+    return None
 
-    results = sp.search(q=keyword, type='track', limit=50)
+@cache.memoize(timeout=3600)  # Cache for 1 hour
+def get_all_tracks_from_playlist(sp, playlist_id):
+    tracks = []
+    results = sp.playlist_tracks(playlist_id)
+    tracks.extend(results['items'])
+
+    while results['next']:
+        results = sp.next(results)
+        tracks.extend(results['items'])
+
+    return tracks
+
+@cache.memoize(timeout=600)  # Cache search results for 10 minutes
+def search_tracks(sp, query):
+    results = sp.search(q=query, type='track', limit=10)
     tracks = results['tracks']['items']
+    return [{'name': track['name'], 
+             'artist': track['artists'][0]['name'], 
+             'album_cover': track['album']['images'][0]['url']} for track in tracks]
+
+def get_random_track(sp):
+    artist_name = session.get('artist')
+    playlist_link = session.get('playlist_link')
     
-    # Filter out tracks without a preview URL
+    if artist_name:
+        results = sp.search(q=f'artist:{artist_name}', type='artist', limit=1)
+        artist = results['artists']['items']
+
+        if not artist:
+            flash(f"No artist found with name '{artist_name}'", "danger")
+            return redirect(url_for('choose'))
+        
+        artist_id = artist[0]['id']
+        albums = sp.artist_albums(artist_id, album_type='album', limit=50)
+        album_ids = [album['id'] for album in albums['items']]
+
+        tracks = []
+        for album_id in album_ids:
+            album_tracks = sp.album_tracks(album_id)
+            tracks.extend(album_tracks['items'])
+
+    elif playlist_link:
+        playlist_id = extract_playlist_id(playlist_link)
+        if not playlist_id:
+            flash("Invalid playlist URL.", "danger")
+            return redirect(url_for('choose'))
+
+        tracks = get_all_tracks_from_playlist(sp, playlist_id)
+
+    else:
+        random_keywords = ['Farid Bang']
+        keyword = random.choice(random_keywords)
+        tracks = search_tracks(sp, keyword)
+
     tracks_with_preview = [track for track in tracks if track['preview_url']]
 
     if not tracks_with_preview:
-        return None  # Handle case when no tracks with a preview are found
+        return None
 
-    # Get Tracks that have been played already in current session
     played_tracks = session.get('played_tracks', [])
 
     tracks_to_choose_from = [track for track in tracks_with_preview if track['id'] not in played_tracks]
 
     if not tracks_to_choose_from:
-        # If all tracks have been played, clear the session or reset it for the user
         session['played_tracks'] = []
-        # You could also add logic here to fetch new tracks or retry with a different keyword
         return get_random_track(sp)  # Retry to get a fresh set of tracks
 
-    # Select a random track that hasn't been played yet
     selected_track = random.choice(tracks_to_choose_from)
-    
-    # Update the session with the ID of the selected track
     played_tracks.append(selected_track['id'])
     session['played_tracks'] = played_tracks
 
@@ -139,22 +213,20 @@ def spotify_quiz():
 
         return redirect(url_for('spotify_quiz'))
 
-# Neue Route für die Song-Suche mit Album-Cover
 @app.route('/search')
 def search():
     query = request.args.get('q')
     sp = get_spotify_client()
     
     if sp is None:
-        return jsonify({'songs': []}), 401  # Nicht authentifiziert
+        return jsonify({'songs': []}), 401  # Not authenticated
 
-    results = sp.search(q=query, type='track', limit=10)
-    tracks = results['tracks']['items']
-    songs = [{'name': track['name'], 
-              'artist': track['artists'][0]['name'], 
-              'album_cover': track['album']['images'][0]['url']} for track in tracks]
-
-    return jsonify({'songs': songs})
+    try:
+        songs = search_tracks(sp, query)
+        return jsonify({'songs': songs})
+    except Exception as e:
+        logging.error(f"Search failed: {e}")
+        return jsonify({'songs': []}), 500  # Internal Server Error
 
 if __name__ == '__main__':
     app.run(debug=True)
