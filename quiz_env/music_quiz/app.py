@@ -108,11 +108,13 @@ def extract_playlist_id(url):
 def get_all_tracks_from_playlist(sp, playlist_id):
     tracks = []
     results = sp.playlist_tracks(playlist_id)
-    tracks.extend(results['items'])
+    filtered_tracks = [track for track in results['items'] if 'instrumental' not in track['track']['name'].lower()]
+    tracks.extend(filtered_tracks)
 
     while results['next']:
         results = sp.next(results)
-        tracks.extend(results['items'])
+        filtered_tracks = [track for track in results['items'] if 'instrumental' not in track['track']['name'].lower()]
+        tracks.extend(filtered_tracks)
 
     return tracks
 
@@ -169,7 +171,8 @@ def get_tracks_from_session(sp):
         tracks = []
         for album_id in album_ids:
             album_tracks = sp.album_tracks(album_id)
-            tracks.extend(album_tracks['items'])
+            filtered_tracks = [track for track in album_tracks['items'] if 'instrumental' not in track['name'].lower()]
+            tracks.extend(filtered_tracks)
         return tracks
 
     elif playlist_id:
