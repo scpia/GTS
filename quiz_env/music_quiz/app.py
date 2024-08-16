@@ -172,10 +172,10 @@ def get_tracks_from_session(sp):
     if album_ids:
         # Fetch tracks based on album_ids
         tracks = []
-        for album_id in album_ids:
-            album_tracks = sp.album_tracks(album_id)
-            filtered_tracks = [track for track in album_tracks['items'] if 'instrumental' not in track['name'].lower()]
-            tracks.extend(filtered_tracks)
+        chosen_album = random.choice(album_ids)
+        album_tracks = sp.album_tracks(chosen_album)
+        filtered_tracks = [track for track in album_tracks['items'] if 'instrumental' not in track['name'].lower()]
+        tracks.extend(filtered_tracks)
         return tracks, is_Playlist
 
     elif playlist_id:
