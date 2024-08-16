@@ -78,11 +78,18 @@ def choose():
 @app.route('/artist', methods=['GET', 'POST'])
 def artist():
     if request.method == 'POST':
-        artist_name = request.form.get('artist_name')
-        flash(f"Artist '{artist_name}' submitted successfully!", "success")
-        session['artist'] = artist_name
-        return redirect(url_for('spotify_quiz'))
-    return render_template('artist.html')
+        data = request.get_json()
+        artist_name = data.get('artist_name')
+        if artist_name:
+            session['artist'] = artist_name
+            return jsonify({"success": True})
+        else:
+            return jsonify({"success": False}), 400
+    return render_template('artist.html')  # Render a form or information page
+
+
+
+
 
 @app.route('/test')
 def test():
@@ -118,16 +125,23 @@ def get_all_tracks_from_playlist(sp, playlist_id):
 
     return tracks
 
-@cache.memoize(timeout=600)  # Cache search results for 10 minutes
-def search_tracks(sp, query):
-    results = sp.search(q=query, type='track', limit=10)
-    tracks = results['tracks']['items']
-    return [{'name': track['name'], 
-             'artist': track['artists'][0]['name'], 
-             'album_cover': track['album']['images'][0]['url']} for track in tracks]
+@app.route('/submit_artist', methods=['POST'])# If you use this, ensure CSRF protection is correctly applied
+def submit_artist():
+    data = request.get_json()
+    artist_name = data.get('artist_name')
+
+    if artist_name:
+        session['artist'] = artist_name
+        return jsonify({"success": True})
+    else:
+        return jsonify({"success": False}), 400
+
+
+
 
 def initialize_track_list(sp):
     artist_name = session.get('artist')
+    print(f"########################## -->>>>> {artist_name}")
     playlist_link = session.get('playlist_link')
     
     if artist_name:
@@ -210,7 +224,7 @@ def spotify_quiz():
         # Initialize the track list if not already present
         if 'track_list' not in session:
             initialize_track_list(sp)
-        
+        print(session.get('artist'))
         track = get_random_track(sp)
         print(track)
         if not track:
@@ -241,6 +255,14 @@ def spotify_quiz():
         return redirect(url_for('spotify_quiz'))
 
 
+@cache.memoize(timeout=600)  # Cache search results for 10 minutes
+def search_tracks(sp, query):
+    results = sp.search(q=query, type='track', limit=10)
+    tracks = results['tracks']['items']
+    return [{'name': track['name'], 
+             'artist': track['artists'][0]['name'], 
+             'album_cover': track['album']['images'][0]['url']} for track in tracks]
+
 @app.route('/search')
 def search():
     query = request.args.get('q')
@@ -255,6 +277,38 @@ def search():
     except Exception as e:
         logging.error(f"Search failed: {e}")
         return jsonify({'songs': []}), 500  # Internal Server Error
+
+@cache.memoize(timeout=600)  # Cache search results for 10 minutes
+@app.route('/search_artist')
+def search_artist():
+    query = request.args.get('q')
+    sp = get_spotify_client()
+    
+    if sp is None:
+        return jsonify({'artists': []}), 401  # Not authenticated
+
+    try:
+        # Perform search for artists based on the query
+        results = sp.search(q=f'artist:{query}', type='artist', limit=5)
+        artists = results['artists']['items']
+        
+        # Use a dictionary to avoid duplicates
+        unique_artists = {artist['name']: artist for artist in artists}
+        
+        # Create a list of artist suggestions including their name and image
+        artist_suggestions = [
+            {
+                'artist': artist['name'],
+                'image': artist['images'][0]['url'] if artist['images'] else 'default_image_url'
+            } for artist in unique_artists.values()
+        ]
+        
+        return jsonify({'artists': artist_suggestions})
+    except Exception as e:
+        logging.error(f"Artist search failed: {e}")
+        return jsonify({'artists': []}), 500  # Internal Server Error
+
+
 
 if __name__ == '__main__':
     app.run(debug=True)

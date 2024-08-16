@@ -3,19 +3,176 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enter Artist</title>
+    <title>Guess the Artist</title>
     <style>
-        /* Use the same styles as before */
+        /* Flexbox centering */
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+        }
+
+        /* Container styling */
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 350px;
+            position: relative;
+        }
+
+        /* Input field and button styling */
+        input[type="text"] {
+            width: calc(100% - 20px); /* Adjust width to account for padding */
+            padding: 10px;
+            margin-top: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        input[type="submit"] {
+            width: 100%;
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-top: 20px;
+            box-sizing: border-box;
+        }
+
+        input[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+
+        /* Suggestions dropdown styling */
+        #suggestions {
+            border: 1px solid #ccc;
+            max-height: 150px;
+            overflow-y: auto;
+            background-color: white;
+            width: auto; /* Auto width based on content */
+            min-width: 100%; /* Minimum width to match the input field */
+            position: absolute;
+            left: 0;
+            z-index: 1000;
+            border-radius: 5px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-top: 5px; /* Adds a small space between the input and the suggestions */
+        }
+
+        .suggestion-item {
+            padding: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+
+        .suggestion-item img {
+            width: 40px;
+            height: 40px;
+            margin-right: 10px;
+            border-radius: 5px;
+        }
+
+        .suggestion-item:hover {
+            background-color: #f0f0f0;
+        }
+
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Enter Artist Name</h1>
-        <form action="{{ url_for('artist') }}" method="POST">
-            <label for="artist_name">Artist Name:</label>
-            <input type="text" id="artist_name" name="artist_name" required autocomplete="off">
+        <h1>Select an Artist</h1>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form id="artist-form">
+            <div>
+                <label for="artist_name">Search for Artist</label>
+                <input type="text" id="artist_name" name="artist_name" required autocomplete="off">
+                <div id="suggestions"></div>
+            </div>
             <input type="submit" value="Submit">
         </form>
     </div>
+
+    <script>
+document.getElementById('artist_name').addEventListener('input', function() {
+    let query = this.value;
+
+    if (query.length > 1) {  // Start searching after 1 character
+        fetch(`/search_artist?q=${query}`)
+            .then(response => response.json())
+            .then(data => {
+                let suggestions = document.getElementById('suggestions');
+                suggestions.innerHTML = '';  // Clear previous suggestions
+
+                data.artists.forEach(artist => {
+                    let item = document.createElement('div');
+                    item.classList.add('suggestion-item');
+                    item.innerHTML = `<img src="${artist.image}" alt="Artist Image"><span>${artist.artist}</span>`;
+                    item.onclick = function() {
+                        document.getElementById('artist_name').value = artist.artist;
+                        suggestions.innerHTML = '';  // Clear suggestions after selection
+                    };
+                    suggestions.appendChild(item);
+                });
+            })
+            .catch(error => console.error('Error fetching artist suggestions:', error));
+    } else {
+        document.getElementById('suggestions').innerHTML = '';  // Clear suggestions if query is too short
+    }
+});
+
+
+document.getElementById('artist-form').addEventListener('submit', function(event) {
+    event.preventDefault();  // Prevent the default form submission
+
+    let artistName = document.getElementById('artist_name').value;
+
+    // Debugging: Check if the artist name is correctly retrieved
+    console.log("Submitting artist name:", artistName);
+
+    // Send the artist name to the backend
+    fetch('{{ url_for("artist") }}', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ artist_name: artistName })
+})
+.then(response => response.json())
+.then(data => {
+    if (data.success) {
+        window.location.href = '{{ url_for("spotify_quiz") }}';  // Redirect to quiz page
+    } else {
+        alert('Failed to start quiz. Please try again.');
+    }
+})
+.catch(error => console.error('Error submitting artist:', error));
+
+});
+
+
+    </script>
 </body>
 </html>
