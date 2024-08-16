@@ -167,6 +167,7 @@ def get_tracks_from_session(sp):
     album_ids = session.get('album_ids')
     playlist_id = session.get('playlist_id')
     keyword = session.get('search_keyword')
+    is_Playlist = False
 
     if album_ids:
         # Fetch tracks based on album_ids
@@ -175,29 +176,30 @@ def get_tracks_from_session(sp):
             album_tracks = sp.album_tracks(album_id)
             filtered_tracks = [track for track in album_tracks['items'] if 'instrumental' not in track['name'].lower()]
             tracks.extend(filtered_tracks)
-        return tracks
+        return tracks, is_Playlist
 
     elif playlist_id:
         # Fetch tracks based on playlist_id
         tracks = get_all_tracks_from_playlist(sp, playlist_id)
-        return tracks
+        is_Playlist = True
+        return tracks, is_Playlist
 
     elif keyword:
         # Fetch tracks based on search keyword
         tracks = search_tracks(sp, keyword)
         return tracks
 
-    return []
+    return [], is_Playlist
 
 
 def get_random_track(sp):
-    tracks = get_tracks_from_session(sp)
+    tracks, is_Playlist = get_tracks_from_session(sp)
     if not tracks:
         flash("Track list is empty or not initialized. Please restart the quiz.", "danger")
         return None
 
     track = random.choice(tracks)
-    return track
+    return track, is_Playlist
 
 
 @app.route('/spotify-quiz', methods=['GET', 'POST'])
@@ -213,15 +215,19 @@ def spotify_quiz():
         if 'track_list' not in session:
             initialize_track_list(sp)
 
-        track = get_random_track(sp)
+        track, is_Playlist = get_random_track(sp)
 
         if not track:
             return redirect(url_for('spotify_quiz'))
 
-        session['track_name'] = track['track']['name'].lower()
-        session['track_artist'] = track['track']['artists'][0]['name'].lower()
-        session['track_preview'] = track['track']['preview_url']
-        print(f"Session Data (GET): {session}")
+        if is_Playlist:
+            session['track_name'] = track['track']['name'].lower()
+            session['track_artist'] = track['track']['artists'][0]['name'].lower()
+            session['track_preview'] = track['track']['preview_url']
+        else:
+            session['track_name'] = track['name'].lower()
+            session['track_artist'] = track['artists'][0]['name'].lower()
+            session['track_preview'] = track['preview_url']
         return render_template('spotify_quiz.html', preview_url=session['track_preview'])
 
     elif request.method == 'POST':
@@ -235,7 +241,7 @@ def spotify_quiz():
             flash(f"Wrong! The correct answer was '{correct_song_name}' by '{correct_artist_name}'", "danger")
 
         # Continue to the next track
-        track = get_random_track(sp)
+        track, is_Playlist = get_random_track(sp)
         if not track:
             flash("No more tracks available! Please refresh the quiz.", "info")
             # Optionally handle case where no tracks are left
