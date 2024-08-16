@@ -12,14 +12,19 @@ html {
   background-color: #051f0b;
 }
 
+h1 {
+  color: #e9b66f;
+}
+
 /* Container styling */
 .container {
-  background-color: white;
+  background-color: #143406;
   padding: 20px;
   border-radius: 10px;
   box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
   text-align: center;
-  width: 350px;
+  height: 500px;
+  width: 500px;
   position: relative;
 }
 
@@ -54,10 +59,10 @@ input[type="submit"]:hover {
 
 /* Suggestions dropdown styling */
 #suggestions {
-  border: 1px solid #ccc;
+  border: 1px solid rgb(54, 23, 3);
   max-height: 150px;
   overflow-y: auto;
-  background-color: white;
+  background-color: rgb(54, 23, 3);
   width: auto; /* Auto width based on content */
   min-width: 100%; /* Minimum width to match the input field */
   position: absolute;
@@ -93,7 +98,19 @@ audio {
   border-radius: 5px;
   outline: none;
 }
-
+.spotify_quiz-input-container {
+  margin-top: 50px;
+}
 .spotify_quiz-input-container-lable {
   font-size: large;
+  color: #e9b66f;
+}
+.spotify_quiz-input-container-input {
+  margin-top: 75px !important;
+  color: #e9b66f !important;
+  background-color: #051f0b !important;
+  padding: 5px;
+  border: black solid 2px !important;
+  border-radius: 8px !important;
+  width: fit-content !important;
 }
