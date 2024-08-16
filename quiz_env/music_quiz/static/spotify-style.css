@@ -1,0 +1,99 @@
+/* Flexbox centering */
+/* Flexbox centering */
+body,
+html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: Inknut Antiqua;
+  background-color: #051f0b;
+}
+
+/* Container styling */
+.container {
+  background-color: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  width: 350px;
+  position: relative;
+}
+
+/* Input field and button styling */
+input[type="text"] {
+  width: calc(100% - 20px); /* Adjust width to account for padding */
+  padding: 10px;
+  margin-top: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 16px;
+  box-sizing: border-box;
+}
+
+input[type="submit"] {
+  width: 100%;
+  padding: 10px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin-top: 20px;
+  box-sizing: border-box;
+}
+
+input[type="submit"]:hover {
+  background-color: #0056b3;
+}
+
+/* Suggestions dropdown styling */
+#suggestions {
+  border: 1px solid #ccc;
+  max-height: 150px;
+  overflow-y: auto;
+  background-color: white;
+  width: auto; /* Auto width based on content */
+  min-width: 100%; /* Minimum width to match the input field */
+  position: absolute;
+  left: 0;
+  z-index: 1000;
+  border-radius: 5px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-top: 5px; /* Adds a small space between the input and the suggestions */
+}
+
+.suggestion-item {
+  padding: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.suggestion-item img {
+  width: 40px;
+  height: 40px;
+  margin-right: 10px;
+  border-radius: 5px;
+}
+
+.suggestion-item:hover {
+  background-color: #f0f0f0;
+}
+
+/* Audio element styling */
+audio {
+  width: 100%;
+  margin-top: 10px;
+  border-radius: 5px;
+  outline: none;
+}
+
+.spotify_quiz-input-container-lable {
+  font-size: large;
+}

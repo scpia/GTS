@@ -92,8 +92,6 @@ def callback():
 
     session["token_info"] = token_info
     return redirect(url_for('choose'))
-##################################################################
-#######                  FUNCTIONS                         #######   
 
 def get_spotify_client():
     token_info = session.get("token_info", None)
