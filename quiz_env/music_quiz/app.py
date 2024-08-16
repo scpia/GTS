@@ -88,9 +88,6 @@ def artist():
     return render_template('artist.html')  # Render a form or information page
 
 
-
-
-
 @app.route('/test')
 def test():
     return render_template('spotify_quiz.html', preview_url=None)
@@ -117,6 +114,8 @@ def get_all_tracks_from_playlist(sp, playlist_id):
     results = sp.playlist_tracks(playlist_id)
     filtered_tracks = [track for track in results['items'] if 'instrumental' not in track['track']['name'].lower()]
     tracks.extend(filtered_tracks)
+    print("########->>>>>>TRACKS")
+    print(tracks)
 
     while results['next']:
         results = sp.next(results)
@@ -125,24 +124,12 @@ def get_all_tracks_from_playlist(sp, playlist_id):
 
     return tracks
 
-@app.route('/submit_artist', methods=['POST'])# If you use this, ensure CSRF protection is correctly applied
-def submit_artist():
-    data = request.get_json()
-    artist_name = data.get('artist_name')
-
-    if artist_name:
-        session['artist'] = artist_name
-        return jsonify({"success": True})
-    else:
-        return jsonify({"success": False}), 400
-
-
-
 
 def initialize_track_list(sp):
     artist_name = session.get('artist')
     print(f"########################## -->>>>> {artist_name}")
     playlist_link = session.get('playlist_link')
+    print(f"######################### --> {playlist_link}")
     
     if artist_name:
         results = sp.search(q=f'artist:{artist_name}', type='artist', limit=1)
@@ -162,6 +149,7 @@ def initialize_track_list(sp):
 
     elif playlist_link:
         playlist_id = extract_playlist_id(playlist_link)
+
         if not playlist_id:
             flash("Invalid playlist URL.", "danger")
             return None
@@ -224,15 +212,15 @@ def spotify_quiz():
         # Initialize the track list if not already present
         if 'track_list' not in session:
             initialize_track_list(sp)
-        print(session.get('artist'))
+
         track = get_random_track(sp)
-        print(track)
+
         if not track:
             return redirect(url_for('spotify_quiz'))
 
-        session['track_name'] = track['name'].lower()
-        session['track_artist'] = track['artists'][0]['name'].lower()
-        session['track_preview'] = track['preview_url']
+        session['track_name'] = track['track']['name'].lower()
+        session['track_artist'] = track['track']['artists'][0]['name'].lower()
+        session['track_preview'] = track['track']['preview_url']
         print(f"Session Data (GET): {session}")
         return render_template('spotify_quiz.html', preview_url=session['track_preview'])
 
