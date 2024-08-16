@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Choose Your Game Mode</title>
+    <style>
+        /* Your existing styles, adjusted for this new page */
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 350px;
+            position: relative;
+        }
+        input[type="text"], input[type="submit"], select {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin-top: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        input[type="submit"] {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-top: 20px;
+        }
+        input[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Choose Your Game Mode</h1>
+        <form action="{{ url_for('choose') }}" method="POST">
+            <label for="choice">Choose mode:</label>
+            <select id="choice" name="choice">
+                <option value="artist">Artist</option>
+                <option value="playlist">Playlist</option>
+            </select>
+            <div id="artist-fields" style="display:none;">
+                <label for="artist_name">Artist Name:</label>
+                <input type="text" id="artist_name" name="artist_name" autocomplete="off">
+            </div>
+            <div id="playlist-fields" style="display:none;">
+                <label for="playlist_link">Playlist Link:</label>
+                <input type="text" id="playlist_link" name="playlist_link">
+            </div>
+            <input type="submit" value="Continue">
+        </form>
+        <script>
+            document.getElementById('choice').addEventListener('change', function() {
+                if (this.value === 'artist') {
+                    document.getElementById('artist-fields').style.display = 'block';
+                    document.getElementById('playlist-fields').style.display = 'none';
+                } else {
+                    document.getElementById('artist-fields').style.display = 'none';
+                    document.getElementById('playlist-fields').style.display = 'block';
+                }
+            });
+        </script>
+    </div>
+</body>
+</html>

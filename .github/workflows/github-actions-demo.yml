@@ -23,4 +23,5 @@ jobs:
         ssh -o StrictHostKeyChecking=no root@194.164.61.105 << 'EOF'
         cd /var/www/html/GTS
         git pull origin main
+        service apache2 restart
         EOF
