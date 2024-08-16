@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, jsonify, redirect, session, url_for, flash
+import requests  # Verwenden der requests-Bibliothek für API-Anfragen
 from flask_caching import Cache
 from spotipy.oauth2 import SpotifyOAuth
-import requests  # Verwenden der requests-Bibliothek für API-Anfragen
 import json
 import spotipy
 import random
@@ -28,20 +28,13 @@ def fetch_questions(category_id):
     data = response.json()
     return data['results']
 
-def fetch_questions(category_id):
-    url = f'https://opentdb.com/api.php?amount=10&category={category_id}'
-    response = requests.get(url)  # Verwenden von requests.get() statt request.get()
-    data = response.json()
-    return data['results']
-
 def load_questions():
     with open('test_questions.json') as f:
         questions = json.load(f)
     return questions
 
 @app.route('/')
-def menu():
-    #session.clear()
+def menü():
     return render_template('menü.html')
 
 @app.route('/quiz-fragen/<int:category_id>')
