@@ -1,19 +1,50 @@
 #categories-menu {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
 
-  .titel-themen-auswahl {
-      font-family: 'Merriweather', serif;
-      font-size: 3rem;
-      color: #2c3e50;
-      text-align: center;
-      margin: 20px 0;
-      font-weight: bold;
-      letter-spacing: 2px;
-    }
-    
+.fragen-header {
+  background-color: #143406;
+  color: #bba050;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 74px;
+  margin: 5px;
+  padding: 0 20px;
+}
+
+.navbar-menu {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  align-items: center;
+  list-style: none;
+}
+
+.navbar-link {
+  color: #bba050;
+  text-decoration: none;
+  padding: 0 15px;
+  font-size: 1.2rem;
+  transition: color 0.3s ease;
+}
+
+.navbar-link:hover {
+  color: #e9b61f;
+  border: black solid 2px;
+}
+
+.menu .titel-themen-auswahl {
+  font-family: "Merriweather", serif;
+  font-size: 3rem;
+  color: #2c3e50;
+  text-align: center;
+  margin: 20px 0;
+  font-weight: bold;
+  letter-spacing: 2px;
+}
 
 .menu-button {
   background-color: #27ae60;
@@ -32,6 +63,6 @@
   transform: translateY(4px);
   box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.2);
 }
-.menu-button:hover{
+.menu-button:hover {
   background-color: #13793ec6;
 }
