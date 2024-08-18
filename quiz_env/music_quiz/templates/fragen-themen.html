@@ -19,8 +19,35 @@
           </ul>
         </div>
       </div>
+      <div class="filters-container">
+        <div class="filter-group">
+          <label for="difficulty">Schwierigkeitsgrad:</label>
+          <select id="difficulty">
+            <option value="">Alle</option>
+            <option value="easy">Einfach</option>
+            <option value="medium">Mittel</option>
+            <option value="hard">Schwer</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="type">Fragentyp:</label>
+          <select id="type">
+            <option value="">Alle</option>
+            <option value="multiple">Multiple Choice</option>
+            <option value="boolean">Wahr/Falsch</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="category">Kategorie:</label>
+          <select id="category">
+            <option value="">Alle</option>
+            <!-- Kategorien werden hier dynamisch hinzugefügt -->
+          </select>
+        </div>
+        <button id="apply-filters">Filter anwenden</button>
+      </div>
       <div id="categories-menu" class="button-container">
-        <!-- Kategorien werden hier dynamisch hinzugefügt -->
+        <!-- Filtered categories will be dynamically inserted here -->
       </div>
     </div>
     <script src="/static/get-questions-options.js"></script>

@@ -3,8 +3,17 @@ document.addEventListener("DOMContentLoaded", () => {
   const categoryId =
     new URLSearchParams(window.location.search).get("category") || "9"; // Standard auf Kategorie 9 (Allgemein)
 
-  const apiUrl = `https://opentdb.com/api.php?amount=10&category=${categoryId}`;
+  const typeId = new URLSearchParams(window.location.search).get("type") || ""; // Standard auf Kategorie 9 (Allgemein)
 
+  const difficultyId =
+    new URLSearchParams(window.location.search).get("difficulty") || ""; // Standard auf Kategorie 9 (Allgemein)
+
+  if ((typeId === "10") & (categoryId === "10")) {
+    typeId = "multiple";
+  }
+
+  const apiUrl = `https://opentdb.com/api.php?amount=10&category=${categoryId}&type=${typeId}&difficulty=${difficultyId}`;
+  console.log(apiUrl);
   // Array zum Speichern der richtigen Antworten im globalen Scope
   window.correctAnswers = []; // Sicherstellen, dass es global ist
 
@@ -28,7 +37,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       let data = await response.json();
-
+      console.log(data);
       if (data.response_code === 5) {
         throw new Error(
           "Invalid category ID or no questions available for this category."
