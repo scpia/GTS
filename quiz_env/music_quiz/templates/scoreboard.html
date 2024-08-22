@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scoreboard</title>
+</head>
+<body>
+    <h1>Scoreboard</h1>
+    <ul>
+        {% for user_id, score in scoreboard %}
+            <li>{{ user_id }}: {{ score }} points</li>
+        {% endfor %}
+    </ul>
+    <a href="{{ url_for('spotify_quiz') }}">Back to Quiz</a>
+</body>
+</html>

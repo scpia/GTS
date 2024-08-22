@@ -7,12 +7,14 @@ import spotipy
 import random
 import logging
 import re
+import os
 
 logging.basicConfig(level=logging.DEBUG)
 app = Flask(__name__)
 cache = Cache(config={'CACHE_TYPE': 'simple'})
 cache.init_app(app)
 app.secret_key = "PaulIstEinHs"  # Replace with your own secret key
+SCOREBOARD_FILE = "scoreboard.json"
 
 
 ##################################################################
@@ -117,7 +119,13 @@ def callback():
         return redirect(url_for('spotify_login'))
 
     session["token_info"] = token_info
+    sp = spotipy.Spotify(auth=token_info['access_token'])
+    user_info = sp.current_user()  # Get current user info
+    session["spotify_id"] = user_info['id']  # Store Spotify ID in session
+    session["display_name"] = user_info['display_name']  # Optionally store display name
+
     return redirect(url_for('choose'))
+
 
 def get_spotify_client():
     token_info = session.get("token_info", None)
@@ -257,7 +265,7 @@ def get_random_track(sp):
 
 @cache.memoize(timeout=600)  # Cache search results for 10 minutes
 def search_tracks(sp, query):
-    results = sp.search(q=query, type='track', limit=10)
+    results = sp.search(q=query, type='track', limit=30)
     tracks = results['tracks']['items']
     return [{'name': track['name'], 
              'artist': track['artists'][0]['name'], 
@@ -312,8 +320,38 @@ def search_artist():
         logging.error(f"Artist search failed: {e}")
         return jsonify({'artists': []}), 500  # Internal Server Error
 
+# Load scoreboard with user data
+def load_scoreboard():
+    if os.path.exists(SCOREBOARD_FILE):
+        with open(SCOREBOARD_FILE, 'r') as f:
+            return json.load(f)
+    return {}
 
-# Actually Game Logic
+# Save user info in scoreboard
+def save_scoreboard(scoreboard):
+    with open(SCOREBOARD_FILE, 'w') as f:
+        json.dump(scoreboard, f)
+
+# Update scoreboard
+def update_score(user_id, score):
+    scoreboard = load_scoreboard()
+    if user_id in scoreboard:
+        scoreboard[user_id] += score
+    else:
+        scoreboard[user_id] = score
+    save_scoreboard(scoreboard)
+
+@app.route('/scoreboard')
+def scoreboard():
+    scoreboard = load_scoreboard()
+    # Sort the scoreboard by score in descending order
+    sorted_scoreboard = sorted(scoreboard.items(), key=lambda x: x[1], reverse=True)
+    return render_template('scoreboard.html', scoreboard=sorted_scoreboard)
+
+
+# Actual Game
+from flask import render_template
+
 @app.route('/spotify-quiz', methods=['GET', 'POST'])
 def spotify_quiz():
     sp = get_spotify_client()
@@ -344,7 +382,15 @@ def spotify_quiz():
             session['track_name'] = track['name'].lower()
             session['track_artist'] = track['artists'][0]['name'].lower()
             session['track_preview'] = track['preview_url']
-        return render_template('spotify_quiz.html', preview_url=session['track_preview'])
+
+        # Get the user's score
+        user_id = session.get('spotify_id')
+        scoreboard = load_scoreboard()
+        current_score = scoreboard.get(user_id, 0) if user_id else 0
+        
+        return render_template('spotify_quiz.html', 
+                               preview_url=session['track_preview'],
+                               current_score=current_score)
 
     # Handle POST State
     elif request.method == 'POST':
@@ -352,9 +398,11 @@ def spotify_quiz():
         user_guess = request.form.get('song_guess', '').strip().lower()
         correct_song_name = session.get('track_name')
         correct_artist_name = session.get('track_artist')
+        spotify_id = session.get('spotify_id')
 
         if correct_song_name in user_guess and correct_artist_name in user_guess:
             flash("Correct! Well done!", "success")
+            update_score(spotify_id, 1)  # Update the score for the user
         else:
             flash(f"Wrong! The correct answer was '{correct_song_name}' by '{correct_artist_name}'", "danger")
 

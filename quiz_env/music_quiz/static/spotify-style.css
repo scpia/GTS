@@ -114,3 +114,41 @@ audio {
   border-radius: 8px !important;
   width: fit-content !important;
 }
+/* Add styles for the quiz container */
+.quiz-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-top: 20px;
+}
+
+/* Style the form section */
+.quiz-form {
+  flex: 1;
+}
+
+/* Style the scoreboard section */
+.scoreboard {
+  flex: 0 0 250px;
+  padding: 20px;
+  border-left: 2px solid #ccc;
+}
+
+/* Style the scoreboard link */
+.scoreboard-link {
+  display: block;
+  margin-top: 20px;
+  text-align: center;
+  font-size: 1em;
+  text-decoration: none;
+  color: #007bff;
+  background-color: #f8f9fa;
+  border: 1px solid #007bff;
+  border-radius: 5px;
+  padding: 10px;
+}
+
+.scoreboard-link:hover {
+  background-color: #e2e6ea;
+  color: #0056b3;
+}

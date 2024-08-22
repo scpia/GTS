@@ -7,6 +7,15 @@
     <link rel="stylesheet" href="/static/spotify-style.css" />
   </head>
   <body>
+    <div class="scoreboard-container">
+      <div class="scoreboard-section">
+        <h2>Your Score</h2>
+        <p>Current Score: {{ current_score }}</p>
+        <a href="{{ url_for('scoreboard') }}" class="scoreboard-link"
+          >View Overall Scoreboard</a
+        >
+      </div>
+    </div>
     <div class="container">
       <h1>Battle der <br />Klang-Imperien</h1>
 
@@ -22,26 +31,25 @@
       <p>Sorry, no preview available for this song.</p>
       {% endif %}
 
-      <form action="{{ url_for('spotify_quiz') }}" method="POST">
-        <div class="spotify_quiz-input-container">
-          <label class="spotify_quiz-input-container-lable" for="song_guess"
-            >Welcher Track ist das?</label
-          >
-          <input
-            type="text"
-            id="song_guess"
-            name="song_guess"
-            required
-            autocomplete="off"
-          />
-          <!--           <div id="suggestions"></div> -->
-        </div>
-        <input
-          class="spotify_quiz-input-container-input"
-          type="submit"
-          value="Submit"
-        />
-      </form>
+      <!-- Quiz Form Section -->
+      <div class="quiz-form-section">
+        <form action="{{ url_for('spotify_quiz') }}" method="POST">
+          <div class="spotify_quiz-input-container">
+            <label class="spotify_quiz-input-container-label" for="song_guess"
+              >Welcher Track ist das?</label
+            >
+            <input
+              type="text"
+              id="song_guess"
+              name="song_guess"
+              required
+              autocomplete="off"
+            />
+            <div id="suggestions"></div>
+          </div>
+          <input type="submit" value="Submit" />
+        </form>
+      </div>
     </div>
 
     <script>
