@@ -14,7 +14,8 @@ app = Flask(__name__)
 cache = Cache(config={'CACHE_TYPE': 'simple'})
 cache.init_app(app)
 app.secret_key = "PaulIstEinHs"  # Replace with your own secret key
-SCOREBOARD_FILE = "scoreboard.json"
+SCOREBOARD_FILE = os.path.join('quiz_env', 'music_quiz', 'scoreboard.json')
+
 
 
 ##################################################################
@@ -230,11 +231,11 @@ def initialize_track_list(sp):
 
         # Check if the items array is empty despite a non-zero total
         if not album_items and albums['total'] > 0:
-    # Log the issue
+            # Log the issue
             logging.warning(f"Expected {albums['total']} albums but received none for artist {artist_id}")
             return jsonify({"success": False, "message": "Albums not found, please try again later."}), 404
 
-    # If no albums found at all
+        # If no albums found at all
         if not album_items:
             return jsonify({"success": False, "message": "No albums found for this artist."}), 404
 
@@ -345,7 +346,9 @@ def search_artist():
         artist_suggestions = [
             {
                 'artist': artist['name'],
-                'image': artist['images'][0]['url'] if artist['images'] else 'default_image_url'
+                'image': artist['images'][0]['url'] if artist['images'] else 'default_image_url',
+                'popularity': artist['popularity']
+
             } for artist in unique_artists.values()
         ]
         
@@ -354,12 +357,16 @@ def search_artist():
         logging.error(f"Artist search failed: {e}")
         return jsonify({'artists': []}), 500  # Internal Server Error
 
-# Load scoreboard with user data
 def load_scoreboard():
-    if os.path.exists(SCOREBOARD_FILE):
-        with open(SCOREBOARD_FILE, 'r') as f:
-            return json.load(f)
-    return {}
+    if not os.path.exists(SCOREBOARD_FILE):
+        # If the file doesn't exist, create an empty scoreboard
+        with open(SCOREBOARD_FILE, 'w') as f:
+            json.dump({}, f)  # Create an empty JSON object
+
+    # Load the scoreboard from the file
+    with open(SCOREBOARD_FILE, 'r') as f:
+        return json.load(f)
+
 
 # Save user info in scoreboard
 def save_scoreboard(scoreboard):
