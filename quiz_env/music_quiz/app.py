@@ -293,7 +293,7 @@ def get_random_track(sp):
     tracks, is_Playlist = get_tracks_from_session(sp)
     if not tracks:
         flash("Track list is empty or not initialized. Please restart the quiz.", "danger")
-        return None
+        return None, None
 
     track = random.choice(tracks)
     return track, is_Playlist
@@ -357,6 +357,7 @@ def search_artist():
         logging.error(f"Artist search failed: {e}")
         return jsonify({'artists': []}), 500  # Internal Server Error
 
+
 def load_scoreboard():
     if not os.path.exists(SCOREBOARD_FILE):
         # If the file doesn't exist, create an empty scoreboard
@@ -365,22 +366,61 @@ def load_scoreboard():
 
     # Load the scoreboard from the file
     with open(SCOREBOARD_FILE, 'r') as f:
-        return json.load(f)
+        scoreboard = json.load(f)
 
+    # Convert old structure to new structure if necessary
+    for user_id, value in scoreboard.items():
+        if isinstance(value, int):  # Old structure
+            scoreboard[user_id] = {"current_score": 0, "high_score": value}
 
-# Save user info in scoreboard
+    return scoreboard
+
 def save_scoreboard(scoreboard):
-    with open(SCOREBOARD_FILE, 'w') as f:
-        json.dump(scoreboard, f)
+    try:
+        with open(SCOREBOARD_FILE, 'w') as f:
+            json.dump(scoreboard, f, indent=4)
+            print(f"Scoreboard saved successfully: {scoreboard}")
+    except Exception as e:
+        print(f"Error saving scoreboard: {e}")
 
-# Update scoreboard
+def reset_current_score(user_id):
+    scoreboard = load_scoreboard()
+    
+    if user_id in scoreboard:
+        scoreboard[user_id]['current_score'] = 0
+    else:
+        scoreboard[user_id] = {'current_score': 0, 'high_score': 0}
+    
+    save_scoreboard(scoreboard)
+
+
 def update_score(user_id, score):
     scoreboard = load_scoreboard()
-    if user_id in scoreboard:
-        scoreboard[user_id] += score
-    else:
-        scoreboard[user_id] = score
+    
+    # Ensure we have a valid entry for the user
+    user_scores = scoreboard.get(user_id, {'current_score': 0, 'high_score': 0})
+    
+    # If the existing entry is just an integer (legacy), convert it to the new format
+    if isinstance(user_scores, int):
+        user_scores = {'current_score': 0, 'high_score': user_scores}
+    
+    # Update the current score
+    user_scores['current_score'] += score
+    
+    # Update the high score if the current score exceeds it
+    if user_scores['current_score'] > user_scores['high_score']:
+        user_scores['high_score'] = user_scores['current_score']
+    
+    # Save the updated scores back to the scoreboard
+    scoreboard[user_id] = user_scores
     save_scoreboard(scoreboard)
+
+    # Log the updated scores for debugging
+    logging.debug(f"Updated scores for user {user_id}: {user_scores}")
+
+
+
+
 
 @app.route('/scoreboard')
 def scoreboard():
@@ -399,17 +439,30 @@ def spotify_quiz():
         logging.debug("Spotify client is None, redirecting to login")
         return redirect(url_for('spotify_login'))
 
+    user_id = session.get('spotify_id')
+    scoreboard = load_scoreboard()
+    
+    user_scores = scoreboard.get(user_id, {})
+    if isinstance(user_scores, int):  # Handle old structure
+        user_scores = {"current_score": 0, "high_score": user_scores}
+    
+    current_score = user_scores.get('current_score', 0)
+    high_score = user_scores.get('high_score', 0)
+    
     # Handle GET State
     if request.method == 'GET':
         # Initialize the track list if not already present
-        if 'track_list' not in session:
-            initialize_track_list(sp)
+        initialize_track_list(sp)
+        if not session.get('album_ids') and session.get('playlist_id'):
+            reset_current_score(user_id)  # Reset current score for new game
+            
 
         # Fetch random Track from Tracklist
         track, is_Playlist = get_random_track(sp)
 
-        if not track:
-            return redirect(url_for('spotify_quiz'))
+        if track is None:
+            # If no track is returned, redirect or handle the error appropriately
+            return redirect(url_for('spotify_quiz'))  # Or return an error page
 
         # Handle case when playing with a Playlist or Artist
         if is_Playlist:
@@ -421,14 +474,10 @@ def spotify_quiz():
             session['track_artist'] = track['artists'][0]['name'].lower()
             session['track_preview'] = track['preview_url']
 
-        # Get the user's score
-        user_id = session.get('spotify_id')
-        scoreboard = load_scoreboard()
-        current_score = scoreboard.get(user_id, 0) if user_id else 0
-        
         return render_template('spotify_quiz.html', 
                                preview_url=session['track_preview'],
                                current_score=current_score,
+                               high_score=high_score,
                                artist_cover=session.get('artist_cover'),
                                artist_name=session.get('artist_name'))
 
@@ -447,12 +496,11 @@ def spotify_quiz():
             flash(f"Wrong! The correct answer was '{correct_song_name}' by '{correct_artist_name}'", "danger")
 
         # Continue to the next track
-        print("#######################################\n")
-        print(get_random_track(sp))
         track, is_Playlist = get_random_track(sp)
-        if not track:
+        if track is None:
             flash("No more tracks available! Please refresh the quiz.", "info")
             # Optionally handle case where no tracks are left
+            return redirect(url_for('spotify_quiz'))  # Or handle as needed
 
         return redirect(url_for('spotify_quiz'))
 

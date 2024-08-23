@@ -10,12 +10,14 @@
 
     <div class="main-container">
         <div class="scoreboard-container">
-            <div class="scoreboard-section">
-                <h2>Your Score</h2>
-                <p>Current Score: {{ current_score }}</p>
-                <a href="{{ url_for('scoreboard') }}" class="scoreboard-link">View Overall Scoreboard</a>
-            </div>
-        </div>
+          <div class="scoreboard-section">
+              <h2>Your Score</h2>
+              <p>Current Score: {{ current_score }}</p>
+              <p>High Score: {{ high_score }}</p>
+              <a href="{{ url_for('scoreboard') }}" class="scoreboard-link">View Overall Scoreboard</a>
+          </div>
+      </div>
+    
 
         <div class="quiz-container">
             <h1>Errate den Song</h1>
