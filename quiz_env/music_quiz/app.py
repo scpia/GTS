@@ -26,8 +26,8 @@ SPOTIPY_REDIRECT_URI = "http://127.0.0.1:5000/callback"
 sp_oauth = SpotifyOAuth(SPOTIPY_CLIENT_ID, SPOTIPY_CLIENT_SECRET, SPOTIPY_REDIRECT_URI,
                         scope="user-library-read user-top-read")
 
-def fetch_questions(category_id):
-    url = f'https://opentdb.com/api.php?amount=10&category={category_id}'
+def fetch_questions(type_id,category_id,difficulty_id):
+    url = f'https://opentdb.com/api.php?amount=10&type={type_id}&category={category_id}&difficulty={difficulty_id}'
     response = requests.get(url)  # Verwenden von requests.get() statt request.get()
     data = response.json()
     return data['results']
@@ -41,9 +41,35 @@ def load_questions():
 def menü():
     return render_template('menü.html')
 
-@app.route('/quiz-fragen/<int:category_id>')
-def index(category_id):
-    questions = fetch_questions(category_id)
+@app.route('/quiz-fragen')
+def quiz_fragen():
+    # Lese die Filterparameter aus der Query-String
+    category_id = request.args.get('category')
+    difficulty = request.args.get('difficulty')
+    question_type = request.args.get('type')
+    print(question_type)
+    # Erstelle die URL für die API-Abfrage
+    url = "https://opentdb.com/api.php"
+    params = {
+        'amount': 10,  # Anzahl der Fragen (Beispielwert, kann angepasst werden)
+        'category': category_id,
+        'difficulty': difficulty,
+        'type': question_type
+    }
+
+    # Entferne None-Werte aus den Parametern
+    params = {key: value for key, value in params.items() if value is not None}
+
+    try:
+        # Hole die Fragen von der API
+        response = requests.get(url, params=params)
+        response.raise_for_status()  # Stelle sicher, dass die Anfrage erfolgreich war
+        questions = response.json()['results']
+        print(questions)
+    except Exception as e:
+        logging.error(f"Fehler beim Abrufen der Fragen: {e}")
+        questions = []
+    # Render die Template-Datei mit den Fragen
     return render_template('index.html', questions=questions)
 
 @app.route('/fragen-themen')
@@ -114,9 +140,30 @@ def artist():
     if request.method == 'POST':
         data = request.get_json()
         artist_name = data.get('artist_name')
+
         if artist_name:
             session['artist'] = artist_name
-            return jsonify({"success": True})
+
+            sp = get_spotify_client()
+            if not sp:
+                return jsonify({"success": False, "message": "Spotify client not authenticated"}), 401
+
+             # Fetch the artist's cover from Spotify
+            results = sp.search(q=f'artist:{artist_name}', type='artist', limit=1)
+            artist_res = results['artists']['items']
+
+            if not artist_res:
+                return jsonify({"success": False, "message": "Artist not found"}), 404
+
+            artist_cover = artist_res[0]['images'][0]['url'] if artist_res[0]['images'] else None
+            print("#############################")
+            print(artist_cover)
+
+            if artist_cover:
+                session['artist_cover'] = artist_cover
+                return jsonify({"success": True})
+            else:
+                return jsonify({"success": False, "message": "Artist cover not found"}), 404
         else:
             return jsonify({"success": False}), 400
     return render_template('artist.html')  # Render a form or information page
@@ -128,6 +175,7 @@ def choose():
         choice = request.form.get('choice')
         if choice == 'artist':
             return redirect(url_for('artist'))
+            
         elif choice == 'playlist':
             playlist_link = request.form.get('playlist_link')
             session['playlist_link'] = playlist_link
@@ -323,9 +371,6 @@ def scoreboard():
     return render_template('scoreboard.html', scoreboard=sorted_scoreboard)
 
 
-# Actual Game
-from flask import render_template
-
 @app.route('/spotify-quiz', methods=['GET', 'POST'])
 def spotify_quiz():
     sp = get_spotify_client()
@@ -364,7 +409,9 @@ def spotify_quiz():
         
         return render_template('spotify_quiz.html', 
                                preview_url=session['track_preview'],
-                               current_score=current_score)
+                               current_score=current_score,
+                               artist_cover=session.get('artist_cover'),
+                               artist_name=session.get('artist_name'))
 
     # Handle POST State
     elif request.method == 'POST':
@@ -387,6 +434,7 @@ def spotify_quiz():
             # Optionally handle case where no tracks are left
 
         return redirect(url_for('spotify_quiz'))
+
 
 
 
