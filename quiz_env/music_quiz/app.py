@@ -223,8 +223,20 @@ def initialize_track_list(sp):
             return None
         
         artist_id = artist[0]['id']
-        albums = sp.artist_albums(artist_id, album_type='album', limit=50)
+        albums = sp.artist_albums(artist_id, album_type='album,single')
+        album_items = albums['items']
         album_ids = [album['id'] for album in albums['items']]
+
+
+        # Check if the items array is empty despite a non-zero total
+        if not album_items and albums['total'] > 0:
+    # Log the issue
+            logging.warning(f"Expected {albums['total']} albums but received none for artist {artist_id}")
+            return jsonify({"success": False, "message": "Albums not found, please try again later."}), 404
+
+    # If no albums found at all
+        if not album_items:
+            return jsonify({"success": False, "message": "No albums found for this artist."}), 404
 
         # Store album_ids or a reference instead of full tracks
         session['album_ids'] = album_ids
@@ -271,7 +283,7 @@ def get_tracks_from_session(sp):
     elif keyword:
         # Fetch tracks based on search keyword
         tracks = search_tracks(sp, keyword)
-        return tracks
+        return tracks, is_Playlist
 
     return [], is_Playlist
 
@@ -323,7 +335,7 @@ def search_artist():
 
     try:
         # Perform search for artists based on the query
-        results = sp.search(q=f'artist:{query}', type='artist', limit=5)
+        results = sp.search(q=f'artist:{query}', type='artist', limit=10)
         artists = results['artists']['items']
         
         # Use a dictionary to avoid duplicates
@@ -428,6 +440,8 @@ def spotify_quiz():
             flash(f"Wrong! The correct answer was '{correct_song_name}' by '{correct_artist_name}'", "danger")
 
         # Continue to the next track
+        print("#######################################\n")
+        print(get_random_track(sp))
         track, is_Playlist = get_random_track(sp)
         if not track:
             flash("No more tracks available! Please refresh the quiz.", "info")
