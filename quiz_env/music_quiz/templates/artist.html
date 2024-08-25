@@ -32,33 +32,47 @@
     </div>
     
     <script>
-        document.getElementById('artist_name').addEventListener('input', function() {
-            let query = this.value;
-        
-            if (query.length > 1) {  // Start searching after 1 character
-                fetch(`/search_artist?q=${query}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        let suggestions = document.getElementById('suggestions');
-                        suggestions.innerHTML = '';  // Clear previous suggestions
-        
-                        data.artists.forEach(artist => {
-                            let item = document.createElement('div');
-                            item.classList.add('suggestion-item');
-                            item.innerHTML = `<img src="${artist.image}" alt="Artist Image"><span>${artist.artist}</span>`;
-                            item.onclick = function() {
-                                document.getElementById('artist_name').value = artist.artist;
-                                document.getElementById('artist_id').value = artist.id;  // Store the artist ID in a hidden input
-                                suggestions.innerHTML = '';  // Clear suggestions after selection
-                            };
-                            suggestions.appendChild(item);
-                        });
-                    })
-                    .catch(error => console.error('Error fetching artist suggestions:', error));
-            } else {
-                document.getElementById('suggestions').innerHTML = '';  // Clear suggestions if query is too short
-            }
-        });
+// Debounce function to delay execution
+function debounce(func, delay) {
+    let timeoutId;
+    return function(...args) {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+            func.apply(this, args);
+        }, delay);
+    };
+}
+
+document.getElementById('artist_name').addEventListener('input', debounce(function() {
+    let query = this.value;
+    console.log("Query: ", query);  // Log the query to ensure it's complete
+
+    if (query.length > 1) {  // Start searching after 1 character
+        fetch(`/search_artist?q=${encodeURIComponent(query)}`)
+            .then(response => response.json())
+            .then(data => {
+                let suggestions = document.getElementById('suggestions');
+                suggestions.innerHTML = '';  // Clear previous suggestions
+
+                data.artists.forEach(artist => {
+                    let item = document.createElement('div');
+                    item.classList.add('suggestion-item');
+                    item.innerHTML = `<img src="${artist.image}" alt="Artist Image"><span>${artist.artist}</span>`;
+                    item.onclick = function() {
+                        document.getElementById('artist_name').value = artist.artist;
+                        document.getElementById('artist_id').value = artist.id;  // Store the artist ID in a hidden input
+                        suggestions.innerHTML = '';  // Clear suggestions after selection
+                    };
+                    suggestions.appendChild(item);
+                });
+            })
+            .catch(error => console.error('Error fetching artist suggestions:', error));
+    } else {
+        document.getElementById('suggestions').innerHTML = '';  // Clear suggestions if query is too short
+    }
+}, 300));
+
+
         
         document.getElementById('artist-form').addEventListener('submit', function(event) {
             event.preventDefault();  // Prevent the default form submission

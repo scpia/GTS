@@ -329,12 +329,11 @@ def search():
         return jsonify({'songs': []}), 500  # Internal Server Error
 
 # Function to display Suggestion in Artist Query
-@cache.memoize(timeout=600)  # Cache search results for 10 minutes
 @app.route('/search_artist')
 def search_artist():
     query = request.args.get('q')
     sp = get_spotify_client()
-    
+
     # Check if API Connection is established
     if sp is None:
         return jsonify({'artists': []}), 401  # Not authenticated
@@ -344,23 +343,36 @@ def search_artist():
         results = sp.search(q=f'artist:{query}', type='artist', limit=10)
         artists = results['artists']['items']
         
-        # Use a dictionary to avoid duplicates
-        unique_artists = {artist['name']: artist for artist in artists}
-        
-        # Create a list of artist suggestions including their name and image
-        artist_suggestions = [
-            {
-                'artist': artist['name'],
-                'id': artist['id'],
-                'image': artist['images'][0]['url'] if artist['images'] else 'default_image_url'
+        # Use a dictionary to track unique artist names and IDs
+        unique_artists = {}
+        artist_suggestions = []
+
+        for artist in artists:
+            artist_name = artist['name'].lower()  # Normalize the name to lower case for consistency
+            artist_id = artist['id']
+
+            # Create a unique key based on artist name and ID to avoid duplicates
+            unique_key = f"{artist_name}"
+            
+            if unique_key not in unique_artists:
+                unique_artists[unique_key] = True  # Mark this artist as seen
                 
-            } for artist in unique_artists.values()
-        ]
-        
+                # Handle the artist image (use a default image if not available)
+                artist_image = artist['images'][0]['url'] if artist['images'] else url_for('static', filename='default_image.png')
+                
+                artist_suggestions.append({
+                    'artist': artist['name'],  # Use the original name (not lowercased)
+                    'id': artist_id,
+                    'image': artist_image
+                })
+        print("##################################################")
+        print(artist_suggestions)
         return jsonify({'artists': artist_suggestions})
     except Exception as e:
         logging.error(f"Artist search failed: {e}")
         return jsonify({'artists': []}), 500  # Internal Server Error
+
+
 
 
 def load_scoreboard():
