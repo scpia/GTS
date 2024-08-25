@@ -8,6 +8,7 @@ import random
 import logging
 import re
 import os
+import lyricsgenius
 
 logging.basicConfig(level=logging.DEBUG)
 app = Flask(__name__)
@@ -16,16 +17,180 @@ cache.init_app(app)
 app.secret_key = "PaulIstEinHs"  # Replace with your own secret key
 SCOREBOARD_FILE = "scoreboard.json"
 
-
+GENIUS_API_TOKEN = "XKguZrxNgVgiJKbq096Dum4gRW1zbmuMfKRAIVPVTrqMGWf29IXAmypSbcsm3hGJ"
 ##################################################################
 # Spotify Auth Details
 SPOTIPY_CLIENT_ID = "197fae76c16941eeb1004bb32363434d"  # Replace with your Spotify Client ID
 SPOTIPY_CLIENT_SECRET = "eed38db9ad374edb80efe73526291d9e"  # Replace with your Spotify Client Secret
 SPOTIPY_REDIRECT_URI = "http://127.0.0.1:5000/callback"
 
+
 sp_oauth = SpotifyOAuth(SPOTIPY_CLIENT_ID, SPOTIPY_CLIENT_SECRET, SPOTIPY_REDIRECT_URI,
                         scope="user-library-read user-top-read")
 
+# Genius API Client initialisieren
+genius = lyricsgenius.Genius(GENIUS_API_TOKEN)
+genius.remove_section_headers = True
+genius.excluded_terms = ["(Remix)", "(Live)"]
+genius.skip_non_songs = True
+
+
+SONGS_JSON_FILE = 'quiz_env/music_quiz/static/song-lyrics.json'
+
+def filter_lyrics(lyrics):
+    """
+    Entfernt unerwünschte Platzhalter wie [Hook] aus den Lyrics und unterteilt sie in Verse.
+    """
+    import re
+    # Regex-Muster für Platzhalter
+    patterns = [r'\[.*?\]', r'\(.*?\)', r'\{.*?\}']
+    
+    for pattern in patterns:
+        lyrics = re.sub(pattern, '', lyrics)
+
+    # Lyrics in Zeilen unterteilen und Leerzeilen entfernen
+    verses = lyrics.split("\n")
+    filtered_verses = [verse.strip() for verse in verses if verse.strip() != ""]
+
+    return filtered_verses
+
+
+def fetch_lyrics_from_genius(sp, song_title, artist_name):
+    """
+    Ruft die Songtexte von Genius für einen bestimmten Song und Künstler ab.
+    """
+    # Song von Genius suchen
+    song = genius.search_song(song_title, artist_name)
+    if not song:
+        raise ValueError(f"Text für den Song '{song_title}' konnte nicht abgerufen werden.")
+    
+    return song.lyrics
+
+def fetch_random_song_from_spotify(sp, search_query):
+    """
+    Ruft einen zufälligen Song von Spotify basierend auf der Suchabfrage ab.
+    """
+    sp = get_spotify_client()
+    results = sp.search(q=search_query, type='track', limit=50)
+    tracks = results['tracks']['items']
+
+    if not tracks:
+        raise ValueError("Keine Songs gefunden.")
+
+    # Zufälligen Song auswählen
+    selected_track = random.choice(tracks)
+    return selected_track#
+
+@app.route("/choose-artist", methods=["GET", "POST"])
+def choose_artist():
+    if request.method == "POST":
+        artist_name = request.form["artist"]
+        session['artist'] = artist_name
+        return redirect(url_for('lyrics_guess'))
+    return render_template("choose-artist.html")
+
+@app.route("/lyrics-guess", methods=["GET", "POST"])
+def lyrics_guess():
+    artist_name = session.get('artist')
+    if not artist_name:
+        return redirect(url_for('choose_artist'))
+    
+    if request.method == "POST":
+        action = request.form.get("action")
+        if action == "get_lyrics":
+            try:
+                sp = get_spotify_client()
+                if sp is None:
+                    raise ValueError("Nicht bei Spotify eingeloggt.")
+                
+                search_query = f'artist:{artist_name}'
+                selected_track = fetch_random_song_from_spotify(sp, search_query)
+                song_title = selected_track['name']
+                song_artist = selected_track['artists'][0]['name']
+
+                lyrics = fetch_lyrics_from_genius(sp, song_title, song_artist)
+                filtered_lyrics = filter_lyrics(lyrics)
+                if not filtered_lyrics or len(filtered_lyrics) < 2:
+                    raise ValueError("Nicht genügend gültige Verse gefunden.")
+
+                random_index = random.randint(0, len(filtered_lyrics) - 4)
+                selected_verses = "\n".join(filtered_lyrics[random_index:random_index + 4])
+
+                session['correct_song'] = song_title
+
+                return render_template("lyrics-guess-game.html", artist=artist_name, lyrics=selected_verses, correct_song=song_title)
+
+            except Exception as e:
+                logging.error(f"Error occurred: {str(e)}")
+                return render_template("lyrics-game.html", error="Fehler beim Abrufen der Lyrics. Bitte versuche es erneut.")
+        
+        elif action == "submit_guess":
+            user_guess = request.form["song"].strip().lower()
+            correct_song = session.get('correct_song', '').strip().lower()
+
+            if user_guess == correct_song:
+                result = f"Richtig! Es ist tatsächlich aus dem Song '{correct_song}'."
+                # Wähle einen neuen Song aus, um weiterzumachen
+                try:
+                    sp = get_spotify_client()
+                    if sp is None:
+                        raise ValueError("Nicht bei Spotify eingeloggt.")
+                    
+                    search_query = f'artist:{artist_name}'
+                    selected_track = fetch_random_song_from_spotify(sp, search_query)
+                    song_title = selected_track['name']
+                    song_artist = selected_track['artists'][0]['name']
+
+                    lyrics = fetch_lyrics_from_genius(sp, song_title, song_artist)
+                    filtered_lyrics = filter_lyrics(lyrics)
+                    if not filtered_lyrics or len(filtered_lyrics) < 2:
+                        raise ValueError("Nicht genügend gültige Verse gefunden.")
+
+                    random_index = random.randint(0, len(filtered_lyrics) - 4)
+                    selected_verses = "\n".join(filtered_lyrics[random_index:random_index + 4])
+
+                    session['correct_song'] = song_title
+
+                    return render_template("lyrics-guess-game.html", artist=artist_name, lyrics=selected_verses, correct_song=song_title, result=result)
+
+                except Exception as e:
+                    logging.error(f"Error occurred: {str(e)}")
+                    return render_template("lyrics-game.html", error="Fehler beim Abrufen neuer Lyrics. Bitte versuche es erneut.")
+            else:
+                result = f"Falsch. Der Song war '{correct_song}'. Versuch's nochmal!"
+
+                # Zeige erneut Lyrics vom gleichen Künstler
+                try:
+                    sp = get_spotify_client()
+                    if sp is None:
+                        raise ValueError("Nicht bei Spotify eingeloggt.")
+                    
+                    search_query = f'artist:{artist_name}'
+                    selected_track = fetch_random_song_from_spotify(sp, search_query)
+                    song_title = selected_track['name']
+                    song_artist = selected_track['artists'][0]['name']
+
+                    lyrics = fetch_lyrics_from_genius(sp, song_title, song_artist)
+                    filtered_lyrics = filter_lyrics(lyrics)
+                    if not filtered_lyrics or len(filtered_lyrics) < 2:
+                        raise ValueError("Nicht genügend gültige Verse gefunden.")
+
+                    random_index = random.randint(0, len(filtered_lyrics) - 4)
+                    selected_verses = "\n".join(filtered_lyrics[random_index:random_index + 4])
+
+                    return render_template("lyrics-guess-game.html", artist=artist_name, lyrics=selected_verses, correct_song=song_title, result=result)
+
+                except Exception as e:
+                    logging.error(f"Error occurred: {str(e)}")
+                    return render_template("lyrics-game.html", error="Fehler beim Abrufen neuer Lyrics. Bitte versuche es erneut.")
+
+    # Initiale Seite zum Abrufen der Lyrics
+    return render_template("lyrics-game.html")
+#
+#
+# Main application and quiz teil
+#
+#
 def fetch_questions(type_id,category_id,difficulty_id):
     url = f'https://opentdb.com/api.php?amount=10&type={type_id}&category={category_id}&difficulty={difficulty_id}'
     response = requests.get(url)  # Verwenden von requests.get() statt request.get()
@@ -99,6 +264,12 @@ def get_categories():
         return jsonify(categories)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+#
+#
+# Spotify sites and functions
+#
+#  
 # Spotify Authentication Route
 @app.route('/spotify-login')
 def spotify_login():
@@ -119,6 +290,7 @@ def callback():
         return redirect(url_for('spotify_login'))
 
     session["token_info"] = token_info
+    sp = get_spotify_client()
     sp = spotipy.Spotify(auth=token_info['access_token'])
     user_info = sp.current_user()  # Get current user info
     session["spotify_id"] = user_info['id']  # Store Spotify ID in session
@@ -126,11 +298,16 @@ def callback():
 
     return redirect(url_for('choose'))
 
-
 def get_spotify_client():
     token_info = session.get("token_info", None)
     if not token_info:
         return None
+
+    # Check if the token has expired
+    if sp_oauth.is_token_expired(token_info):
+        token_info = sp_oauth.refresh_access_token(token_info['refresh_token'])
+        session['token_info'] = token_info
+
     sp = spotipy.Spotify(auth=token_info['access_token'])
     return sp
 

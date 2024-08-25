@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Lyrics-Guess-Spiel</title>
+  </head>
+  <body>
+    <h1>Lyrics-Guess-Spiel</h1>
+    <p>Artist: {{ artist }}</p>
+    <p>Lyrics:</p>
+    <pre>{{ lyrics }}</pre>
+    <form action="/lyrics-guess" method="POST">
+      <input type="hidden" name="action" value="submit_guess" />
+      <input type="hidden" name="correct_song" value="{{ correct_song }}" />
+      <label for="song">Dein Song-Rat:</label>
+      <input type="text" id="song" name="song" required />
+      <button type="submit">Raten</button>
+    </form>
+    {% if result %}
+    <p>{{ result }}</p>
+    {% endif %}
+  </body>
+</html>
