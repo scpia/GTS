@@ -14,7 +14,7 @@ app = Flask(__name__)
 cache = Cache(config={'CACHE_TYPE': 'simple'})
 cache.init_app(app)
 app.secret_key = "PaulIstEinHs"  # Replace with your own secret key
-SCOREBOARD_FILE = os.path.join('quiz_env', 'music_quiz', 'scoreboard.json')
+SCOREBOARD_FILE = 'scoreboard.json'
 
 
 
@@ -140,34 +140,26 @@ def get_spotify_client():
 def artist():
     if request.method == 'POST':
         data = request.get_json()
-        artist_name = data.get('artist_name')
+        artist_id = data.get('id')  # Get the artist_id from the POST data
 
-        if artist_name:
-            session['artist'] = artist_name
+        if artist_id:
+            session['artist_id'] = artist_id
 
             sp = get_spotify_client()
             if not sp:
                 return jsonify({"success": False, "message": "Spotify client not authenticated"}), 401
 
-             # Fetch the artist's cover from Spotify
-            results = sp.search(q=f'artist:{artist_name}', type='artist', limit=1)
-            artist_res = results['artists']['items']
+            # Fetch the artist's details directly using the artist_id
+            artist_info = sp.artist(artist_id)
+            artist_cover = artist_info['images'][0]['url'] if artist_info['images'] else 'default_image_url'
+            session['artist_cover'] = artist_cover
+            session['artist_name'] = artist_info['name']
 
-            if not artist_res:
-                return jsonify({"success": False, "message": "Artist not found"}), 404
-
-            artist_cover = artist_res[0]['images'][0]['url'] if artist_res[0]['images'] else None
-            print("#############################")
-            print(artist_cover)
-
-            if artist_cover:
-                session['artist_cover'] = artist_cover
-                return jsonify({"success": True})
-            else:
-                return jsonify({"success": False, "message": "Artist cover not found"}), 404
+            return jsonify({"success": True})
         else:
-            return jsonify({"success": False}), 400
+            return jsonify({"success": False, "message": "Artist ID not provided"}), 400
     return render_template('artist.html')  # Render a form or information page
+
 
 # Select whether to play in Artist Mode or Playlist Mode
 @app.route('/choose', methods=['GET', 'POST'])
@@ -210,24 +202,15 @@ def get_all_tracks_from_playlist(sp, playlist_id):
 
     return tracks
 
-# Generate Playlist based on input for a session
 def initialize_track_list(sp):
-    artist_name = session.get('artist')
+    artist_id = session.get('artist_id')  # Use artist_id from the session
     playlist_link = session.get('playlist_link')
     
-    if artist_name:
-        results = sp.search(q=f'artist:{artist_name}', type='artist', limit=1)
-        artist = results['artists']['items']
-        
-        if not artist:
-            flash(f"No artist found with name '{artist_name}'", "danger")
-            return None
-        
-        artist_id = artist[0]['id']
+    if artist_id:
+        # Fetch albums directly using the artist ID
         albums = sp.artist_albums(artist_id, album_type='album,single')
         album_items = albums['items']
-        album_ids = [album['id'] for album in albums['items']]
-
+        album_ids = [album['id'] for album in album_items]
 
         # Check if the items array is empty despite a non-zero total
         if not album_items and albums['total'] > 0:
@@ -258,6 +241,8 @@ def initialize_track_list(sp):
         # Handle other cases
         session['search_keyword'] = 'Farid Bang'
         session.modified = True
+
+
 
 # Extract Tracks from initialisze_track_list
 def get_tracks_from_session(sp):
@@ -346,9 +331,9 @@ def search_artist():
         artist_suggestions = [
             {
                 'artist': artist['name'],
-                'image': artist['images'][0]['url'] if artist['images'] else 'default_image_url',
-                'popularity': artist['popularity']
-
+                'id': artist['id'],
+                'image': artist['images'][0]['url'] if artist['images'] else 'default_image_url'
+                
             } for artist in unique_artists.values()
         ]
         
@@ -434,7 +419,6 @@ def scoreboard():
 def spotify_quiz():
     sp = get_spotify_client()
     
-    # Check if API Connection is Active
     if sp is None:
         logging.debug("Spotify client is None, redirecting to login")
         return redirect(url_for('spotify_login'))
@@ -449,19 +433,14 @@ def spotify_quiz():
     current_score = user_scores.get('current_score', 0)
     high_score = user_scores.get('high_score', 0)
     
-    # Handle GET State
     if request.method == 'GET':
-        # Initialize the track list if not already present
         initialize_track_list(sp)
         if not session.get('album_ids') and session.get('playlist_id'):
             reset_current_score(user_id)  # Reset current score for new game
-            
 
-        # Fetch random Track from Tracklist
         track, is_Playlist = get_random_track(sp)
 
         if track is None:
-            # If no track is returned, redirect or handle the error appropriately
             return redirect(url_for('spotify_quiz'))  # Or return an error page
 
         # Handle case when playing with a Playlist or Artist
@@ -481,9 +460,7 @@ def spotify_quiz():
                                artist_cover=session.get('artist_cover'),
                                artist_name=session.get('artist_name'))
 
-    # Handle POST State
     elif request.method == 'POST':
-        # Fetch user input and init. correct guess
         user_guess = request.form.get('song_guess', '').strip().lower()
         correct_song_name = session.get('track_name')
         correct_artist_name = session.get('track_artist')
@@ -495,14 +472,13 @@ def spotify_quiz():
         else:
             flash(f"Wrong! The correct answer was '{correct_song_name}' by '{correct_artist_name}'", "danger")
 
-        # Continue to the next track
         track, is_Playlist = get_random_track(sp)
         if track is None:
             flash("No more tracks available! Please refresh the quiz.", "info")
-            # Optionally handle case where no tracks are left
             return redirect(url_for('spotify_quiz'))  # Or handle as needed
 
         return redirect(url_for('spotify_quiz'))
+
 
 
 

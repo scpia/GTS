@@ -96,7 +96,7 @@
 <body>
     <div class="container">
         <h1>Select an Artist</h1>
-
+    
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
@@ -104,75 +104,75 @@
                 {% endfor %}
             {% endif %}
         {% endwith %}
-
+    
         <form id="artist-form">
             <div>
                 <label for="artist_name">Search for Artist</label>
                 <input type="text" id="artist_name" name="artist_name" required autocomplete="off">
+                <input type="hidden" id="artist_id" name="artist_id">  <!-- Hidden input for artist ID -->
                 <div id="suggestions"></div>
             </div>
             <input type="submit" value="Submit">
         </form>
     </div>
+    
 
     <script>
-document.getElementById('artist_name').addEventListener('input', function() {
-    let query = this.value;
-
-    if (query.length > 1) {  // Start searching after 1 character
-        fetch(`/search_artist?q=${query}`)
+        document.getElementById('artist_name').addEventListener('input', function() {
+            let query = this.value;
+        
+            if (query.length > 1) {  // Start searching after 1 character
+                fetch(`/search_artist?q=${query}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        let suggestions = document.getElementById('suggestions');
+                        suggestions.innerHTML = '';  // Clear previous suggestions
+        
+                        data.artists.forEach(artist => {
+                            let item = document.createElement('div');
+                            item.classList.add('suggestion-item');
+                            item.innerHTML = `<img src="${artist.image}" alt="Artist Image"><span>${artist.artist}</span>`;
+                            item.onclick = function() {
+                                document.getElementById('artist_name').value = artist.artist;
+                                document.getElementById('artist_id').value = artist.id;  // Store the artist ID in a hidden input
+                                suggestions.innerHTML = '';  // Clear suggestions after selection
+                            };
+                            suggestions.appendChild(item);
+                        });
+                    })
+                    .catch(error => console.error('Error fetching artist suggestions:', error));
+            } else {
+                document.getElementById('suggestions').innerHTML = '';  // Clear suggestions if query is too short
+            }
+        });
+        
+        document.getElementById('artist-form').addEventListener('submit', function(event) {
+            event.preventDefault();  // Prevent the default form submission
+        
+            let artistId = document.getElementById('artist_id').value;  // Get the artist ID
+        
+            // Debugging: Check if the artist ID is correctly retrieved
+            console.log("Submitting artist ID:", artistId);
+        
+            // Send the artist ID to the backend
+            fetch('{{ url_for("artist") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ id: artistId })  // Send the artist ID
+            })
             .then(response => response.json())
             .then(data => {
-                let suggestions = document.getElementById('suggestions');
-                suggestions.innerHTML = '';  // Clear previous suggestions
-
-                data.artists.forEach(artist => {
-                    let item = document.createElement('div');
-                    item.classList.add('suggestion-item');
-                    item.innerHTML = `<img src="${artist.image}" alt="Artist Image"><span>${artist.artist}</span>`;
-                    item.onclick = function() {
-                        document.getElementById('artist_name').value = artist.artist;
-                        suggestions.innerHTML = '';  // Clear suggestions after selection
-                    };
-                    suggestions.appendChild(item);
-                });
+                if (data.success) {
+                    window.location.href = '{{ url_for("spotify_quiz") }}';  // Redirect to quiz page
+                } else {
+                    alert('Failed to start quiz. Please try again.');
+                }
             })
-            .catch(error => console.error('Error fetching artist suggestions:', error));
-    } else {
-        document.getElementById('suggestions').innerHTML = '';  // Clear suggestions if query is too short
-    }
-});
-
-
-document.getElementById('artist-form').addEventListener('submit', function(event) {
-    event.preventDefault();  // Prevent the default form submission
-
-    let artistName = document.getElementById('artist_name').value;
-
-    // Debugging: Check if the artist name is correctly retrieved
-    console.log("Submitting artist name:", artistName);
-
-    // Send the artist name to the backend
-    fetch('{{ url_for("artist") }}', {
-    method: 'POST',
-    headers: {
-        'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ artist_name: artistName })
-})
-.then(response => response.json())
-.then(data => {
-    if (data.success) {
-        window.location.href = '{{ url_for("spotify_quiz") }}';  // Redirect to quiz page
-    } else {
-        alert('Failed to start quiz. Please try again.');
-    }
-})
-.catch(error => console.error('Error submitting artist:', error));
-
-});
-
-
-    </script>
+            .catch(error => console.error('Error submitting artist:', error));
+        });
+        </script>
+        
 </body>
 </html>
