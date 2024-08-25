@@ -160,19 +160,39 @@ def artist():
             return jsonify({"success": False, "message": "Artist ID not provided"}), 400
     return render_template('artist.html')  # Render a form or information page
 
-
-# Select whether to play in Artist Mode or Playlist Mode
+# Select whether you want to play with artist or playlist
 @app.route('/choose', methods=['GET', 'POST'])
 def choose():
+    sp = get_spotify_client()
     if request.method == 'POST':
         choice = request.form.get('choice')
+        
         if choice == 'artist':
             return redirect(url_for('artist'))
-            
+        
         elif choice == 'playlist':
             playlist_link = request.form.get('playlist_link')
-            session['playlist_link'] = playlist_link
-            return redirect(url_for('spotify_quiz'))
+            if not playlist_link:  # Validate the playlist link
+                flash("Please provide a valid playlist link.", "error")
+                return redirect(url_for('choose'))
+
+            # Extract the playlist ID using regex
+            playlist_id_match = re.search(r'playlist/([a-zA-Z0-9]+)', playlist_link)
+            if playlist_id_match:
+                playlist_id = playlist_id_match.group(1)
+            else:
+                flash("Invalid Spotify playlist link.", "error")
+                return redirect(url_for('choose'))
+            
+            try:
+                # Fetch the playlist cover image using the playlist ID
+                cover_image = sp.playlist_cover_image(playlist_id)
+                session['artist_cover'] = cover_image[0]['url']  # Assuming the first image is the one you need
+                session['playlist_link'] = playlist_link
+                return redirect(url_for('spotify_quiz'))
+            except Exception as e:
+                flash(f"An error occurred: {str(e)}", "error")
+                return redirect(url_for('choose'))
     
     return render_template('choose.html')
 
