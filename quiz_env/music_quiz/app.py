@@ -1,42 +1,21 @@
 from flask import Flask, render_template, request, jsonify, redirect, session, url_for, flash
-import requests  # Verwenden der requests-Bibliothek für API-Anfragen
 from flask_caching import Cache
-from spotipy.oauth2 import SpotifyOAuth
-import json
-import spotipy
-import random
-import logging
-import re
-import os
+from config import sp_oauth, SPOTIPY_CLIENT_ID, SPOTIPY_CLIENT_SECRET, SPOTIPY_REDIRECT_URI, SpotifyOAuth
+from spotify_utils import get_random_track, get_spotify_client, search_tracks, initialize_track_list, Cache
+from scoreboard_utils import reset_current_score, load_scoreboard, update_score, save_scoreboard
+import json, spotipy, logging, re, requests
+
 
 logging.basicConfig(level=logging.DEBUG)
 app = Flask(__name__)
-cache = Cache(config={'CACHE_TYPE': 'simple'})
+cache = Cache(app, config={'CACHE_TYPE': 'simple'})
 cache.init_app(app)
 app.secret_key = "PaulIstEinHs"  # Replace with your own secret key
-SCOREBOARD_FILE = 'scoreboard.json'
-
-
 
 ##################################################################
 # Spotify Auth Details
-SPOTIPY_CLIENT_ID = "197fae76c16941eeb1004bb32363434d"  # Replace with your Spotify Client ID
-SPOTIPY_CLIENT_SECRET = "eed38db9ad374edb80efe73526291d9e"  # Replace with your Spotify Client Secret
-SPOTIPY_REDIRECT_URI = "http://127.0.0.1:5000/callback"
-
 sp_oauth = SpotifyOAuth(SPOTIPY_CLIENT_ID, SPOTIPY_CLIENT_SECRET, SPOTIPY_REDIRECT_URI,
                         scope="user-library-read user-top-read")
-
-def fetch_questions(type_id,category_id,difficulty_id):
-    url = f'https://opentdb.com/api.php?amount=10&type={type_id}&category={category_id}&difficulty={difficulty_id}'
-    response = requests.get(url)  # Verwenden von requests.get() statt request.get()
-    data = response.json()
-    return data['results']
-
-def load_questions():
-    with open('test_questions.json') as f:
-        questions = json.load(f)
-    return questions
 
 @app.route('/')
 def menü():
@@ -100,6 +79,7 @@ def get_categories():
         return jsonify(categories)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
 # Spotify Authentication Route
 @app.route('/spotify-login')
 def spotify_login():
@@ -127,13 +107,6 @@ def callback():
 
     return redirect(url_for('choose'))
 
-
-def get_spotify_client():
-    token_info = session.get("token_info", None)
-    if not token_info:
-        return None
-    sp = spotipy.Spotify(auth=token_info['access_token'])
-    return sp
 
 # Global Function to set Artist in Artist Mode
 @app.route('/artist', methods=['GET', 'POST'])
@@ -197,120 +170,6 @@ def choose():
     return render_template('choose.html')
 
 
-# Function to extract Playlist ID from Spotify Playlist URL
-def extract_playlist_id(url):
-    """
-    Extracts the playlist ID from a Spotify playlist URL.
-    """
-    match = re.search(r'playlist/([a-zA-Z0-9]+)', url)
-    if match:
-        return match.group(1)
-    return None
-
-# Function to extract all Tracks from a given Playlist
-@cache.memoize(timeout=3600)  # Cache for 1 hour
-def get_all_tracks_from_playlist(sp, playlist_id):
-    tracks = []
-    results = sp.playlist_tracks(playlist_id)
-    filtered_tracks = [track for track in results['items'] if 'instrumental' not in track['track']['name'].lower()]
-    tracks.extend(filtered_tracks)
-
-    while results['next']:
-        results = sp.next(results)
-        filtered_tracks = [track for track in results['items'] if 'instrumental' not in track['track']['name'].lower()]
-        tracks.extend(filtered_tracks)
-
-    return tracks
-
-def initialize_track_list(sp):
-    artist_id = session.get('artist_id')  # Use artist_id from the session
-    playlist_link = session.get('playlist_link')
-    
-    if artist_id:
-        # Fetch albums directly using the artist ID
-        albums = sp.artist_albums(artist_id, album_type='album,single')
-        album_items = albums['items']
-        album_ids = [album['id'] for album in album_items]
-
-        # Check if the items array is empty despite a non-zero total
-        if not album_items and albums['total'] > 0:
-            # Log the issue
-            logging.warning(f"Expected {albums['total']} albums but received none for artist {artist_id}")
-            return jsonify({"success": False, "message": "Albums not found, please try again later."}), 404
-
-        # If no albums found at all
-        if not album_items:
-            return jsonify({"success": False, "message": "No albums found for this artist."}), 404
-
-        # Store album_ids or a reference instead of full tracks
-        session['album_ids'] = album_ids
-        session.modified = True
-
-    elif playlist_link:
-        playlist_id = extract_playlist_id(playlist_link)
-
-        if not playlist_id:
-            flash("Invalid playlist URL.", "danger")
-            return None
-        
-        # Store playlist_id instead of full tracks
-        session['playlist_id'] = playlist_id
-        session.modified = True
-
-    else:
-        # Handle other cases
-        session['search_keyword'] = 'Farid Bang'
-        session.modified = True
-
-
-
-# Extract Tracks from initialisze_track_list
-def get_tracks_from_session(sp):
-    album_ids = session.get('album_ids')
-    playlist_id = session.get('playlist_id')
-    keyword = session.get('search_keyword')
-    is_Playlist = False
-
-    if album_ids:
-        # Fetch tracks based on album_ids
-        tracks = []
-        chosen_album = random.choice(album_ids)
-        album_tracks = sp.album_tracks(chosen_album)
-        filtered_tracks = [track for track in album_tracks['items'] if 'instrumental' not in track['name'].lower()]
-        tracks.extend(filtered_tracks)
-        return tracks, is_Playlist
-
-    elif playlist_id:
-        # Fetch tracks based on playlist_id
-        tracks = get_all_tracks_from_playlist(sp, playlist_id)
-        is_Playlist = True
-        return tracks, is_Playlist
-
-    elif keyword:
-        # Fetch tracks based on search keyword
-        tracks = search_tracks(sp, keyword)
-        return tracks, is_Playlist
-
-    return [], is_Playlist
-
-# Select a random Track from the track list in the session
-def get_random_track(sp):
-    tracks, is_Playlist = get_tracks_from_session(sp)
-    if not tracks:
-        flash("Track list is empty or not initialized. Please restart the quiz.", "danger")
-        return None, None
-
-    track = random.choice(tracks)
-    return track, is_Playlist
-
-@cache.memoize(timeout=600)  # Cache search results for 10 minutes
-def search_tracks(sp, query):
-    results = sp.search(q=query, type='track', limit=30)
-    tracks = results['tracks']['items']
-    return [{'name': track['name'], 
-             'artist': track['artists'][0]['name'], 
-             'album_cover': track['album']['images'][0]['url']} for track in tracks]
-
 # Function to display Suggestion in Guessing State --> Song Guess
 @app.route('/search')
 def search():
@@ -330,6 +189,7 @@ def search():
 
 # Function to display Suggestion in Artist Query
 @app.route('/search_artist')
+@cache.cached(timeout=60)
 def search_artist():
     query = request.args.get('q')
     sp = get_spotify_client()
@@ -365,78 +225,11 @@ def search_artist():
                     'id': artist_id,
                     'image': artist_image
                 })
-        print("##################################################")
-        print(artist_suggestions)
+
         return jsonify({'artists': artist_suggestions})
     except Exception as e:
         logging.error(f"Artist search failed: {e}")
         return jsonify({'artists': []}), 500  # Internal Server Error
-
-
-
-
-def load_scoreboard():
-    if not os.path.exists(SCOREBOARD_FILE):
-        # If the file doesn't exist, create an empty scoreboard
-        with open(SCOREBOARD_FILE, 'w') as f:
-            json.dump({}, f)  # Create an empty JSON object
-
-    # Load the scoreboard from the file
-    with open(SCOREBOARD_FILE, 'r') as f:
-        scoreboard = json.load(f)
-
-    # Convert old structure to new structure if necessary
-    for user_id, value in scoreboard.items():
-        if isinstance(value, int):  # Old structure
-            scoreboard[user_id] = {"current_score": 0, "high_score": value}
-
-    return scoreboard
-
-def save_scoreboard(scoreboard):
-    try:
-        with open(SCOREBOARD_FILE, 'w') as f:
-            json.dump(scoreboard, f, indent=4)
-            print(f"Scoreboard saved successfully: {scoreboard}")
-    except Exception as e:
-        print(f"Error saving scoreboard: {e}")
-
-def reset_current_score(user_id):
-    scoreboard = load_scoreboard()
-    
-    if user_id in scoreboard:
-        scoreboard[user_id]['current_score'] = 0
-    else:
-        scoreboard[user_id] = {'current_score': 0, 'high_score': 0}
-    
-    save_scoreboard(scoreboard)
-
-
-def update_score(user_id, score):
-    scoreboard = load_scoreboard()
-    
-    # Ensure we have a valid entry for the user
-    user_scores = scoreboard.get(user_id, {'current_score': 0, 'high_score': 0})
-    
-    # If the existing entry is just an integer (legacy), convert it to the new format
-    if isinstance(user_scores, int):
-        user_scores = {'current_score': 0, 'high_score': user_scores}
-    
-    # Update the current score
-    user_scores['current_score'] += score
-    
-    # Update the high score if the current score exceeds it
-    if user_scores['current_score'] > user_scores['high_score']:
-        user_scores['high_score'] = user_scores['current_score']
-    
-    # Save the updated scores back to the scoreboard
-    scoreboard[user_id] = user_scores
-    save_scoreboard(scoreboard)
-
-    # Log the updated scores for debugging
-    logging.debug(f"Updated scores for user {user_id}: {user_scores}")
-
-
-
 
 
 @app.route('/scoreboard')
@@ -510,10 +303,6 @@ def spotify_quiz():
             return redirect(url_for('spotify_quiz'))  # Or handle as needed
 
         return redirect(url_for('spotify_quiz'))
-
-
-
-
 
 
 if __name__ == '__main__':
