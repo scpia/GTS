@@ -9,4 +9,3 @@ SPOTIPY_REDIRECT_URI = "http://127.0.0.1:5000/callback"
 # Initialize Spotify OAuth
 sp_oauth = SpotifyOAuth(SPOTIPY_CLIENT_ID, SPOTIPY_CLIENT_SECRET, SPOTIPY_REDIRECT_URI, scope="user-library-read user-top-read")
 
-# You can add other shared configurations or functions here
