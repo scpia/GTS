@@ -1,10 +1,10 @@
 from flask import Flask, render_template, request, jsonify, redirect, session, url_for, flash
 from flask_caching import Cache
-from config import sp_oauth, SPOTIPY_CLIENT_ID, SPOTIPY_CLIENT_SECRET, SPOTIPY_REDIRECT_URI, SpotifyOAuth
+from config import sp_oauth, SPOTIPY_CLIENT_ID, SPOTIPY_CLIENT_SECRET, SPOTIPY_REDIRECT_URI, SpotifyOAuth, genius_init
 from spotify_utils import get_random_track, get_spotify_client, search_tracks, initialize_track_list, Cache
 from scoreboard_utils import reset_current_score, load_scoreboard, update_score, save_scoreboard
-import json, spotipy, logging, re, requests
-
+from lyrics_utils import filter_lyrics, fetch_lyrics_from_genius, fetch_random_song_from_spotify
+import json, spotipy, logging, re, requests, random
 import lyricsgenius
 
 logging.basicConfig(level=logging.DEBUG)
@@ -12,64 +12,21 @@ app = Flask(__name__)
 cache = Cache(app, config={'CACHE_TYPE': 'simple'})
 cache.init_app(app)
 app.secret_key = "PaulIstEinHs"  # Replace with your own secret key
-GENIUS_API_TOKEN = "XKguZrxNgVgiJKbq096Dum4gRW1zbmuMfKRAIVPVTrqMGWf29IXAmypSbcsm3hGJ"
+
 ##################################################################
 # Spotify Auth Details
 sp_oauth = SpotifyOAuth(SPOTIPY_CLIENT_ID, SPOTIPY_CLIENT_SECRET, SPOTIPY_REDIRECT_URI,
                         scope="user-library-read user-top-read")
 
 # Genius API Client initialisieren
-genius = lyricsgenius.Genius(GENIUS_API_TOKEN)
-genius.remove_section_headers = True
-genius.excluded_terms = ["(Remix)", "(Live)"]
-genius.skip_non_songs = True
+
+genius_init.remove_section_headers = True
+genius_init.excluded_terms = ["(Remix)", "(Live)"]
+genius_init.skip_non_songs = True
 
 
 SONGS_JSON_FILE = 'quiz_env/music_quiz/static/song-lyrics.json'
 
-def filter_lyrics(lyrics):
-    """
-    Entfernt unerwünschte Platzhalter wie [Hook] aus den Lyrics und unterteilt sie in Verse.
-    """
-    import re
-    # Regex-Muster für Platzhalter
-    patterns = [r'\[.*?\]', r'\(.*?\)', r'\{.*?\}']
-    
-    for pattern in patterns:
-        lyrics = re.sub(pattern, '', lyrics)
-
-    # Lyrics in Zeilen unterteilen und Leerzeilen entfernen
-    verses = lyrics.split("\n")
-    filtered_verses = [verse.strip() for verse in verses if verse.strip() != ""]
-
-    return filtered_verses
-
-
-def fetch_lyrics_from_genius(sp, song_title, artist_name):
-    """
-    Ruft die Songtexte von Genius für einen bestimmten Song und Künstler ab.
-    """
-    # Song von Genius suchen
-    song = genius.search_song(song_title, artist_name)
-    if not song:
-        raise ValueError(f"Text für den Song '{song_title}' konnte nicht abgerufen werden.")
-    
-    return song.lyrics
-
-def fetch_random_song_from_spotify(sp, search_query):
-    """
-    Ruft einen zufälligen Song von Spotify basierend auf der Suchabfrage ab.
-    """
-    sp = get_spotify_client()
-    results = sp.search(q=search_query, type='track', limit=50)
-    tracks = results['tracks']['items']
-
-    if not tracks:
-        raise ValueError("Keine Songs gefunden.")
-
-    # Zufälligen Song auswählen
-    selected_track = random.choice(tracks)
-    return selected_track#
 
 @app.route("/choose-artist", methods=["GET", "POST"])
 def choose_artist():
