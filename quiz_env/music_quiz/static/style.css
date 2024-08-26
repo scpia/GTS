@@ -1,8 +1,8 @@
 body {
-  font-family: Open Sans;
+  font-family: Inknut Antiqua;
   margin: 0;
   padding: 20px;
-  background-color: #041809;
+  background-color: #303841;
 }
 
 h1 {
@@ -35,8 +35,8 @@ h1 {
   gap: 20px; /* Abstand zwischen den Frageboxen */
 }
 .question {
-  background-color: #27ae60;
-  color: white;
+  background-color: #3a4750;
+  color: #eeeeee;
   margin: 5px;
   border: none;
   padding: 12px 24px;

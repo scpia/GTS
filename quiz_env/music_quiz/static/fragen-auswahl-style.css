@@ -1,7 +1,7 @@
-#categories-menu {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+html {
+  height: 100%;
+  width: 100%;
+  background-color: #303841;
 }
 
 .fragen-header {
@@ -37,7 +37,7 @@
 }
 
 .menu .titel-themen-auswahl {
-  font-family: "Merriweather", serif;
+  font-family: Inknut Antiqua;
   font-size: 3rem;
   color: #2c3e50;
   text-align: center;
@@ -63,6 +63,65 @@
   transform: translateY(4px);
   box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.2);
 }
+
 .menu-button:hover {
   background-color: #13793ec6;
+}
+
+/* Container for all filters */
+.filters-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  margin: 0 auto;
+  margin-top: 100px;
+  width: 100%;
+  max-width: 400px;
+}
+
+/* Grouping for each filter element */
+.filter-group {
+  width: 100%;
+  margin-bottom: 20px;
+  text-align: center;
+  font-family: Inknut Antiqua;
+  font-size: larger;
+  color: #eeeeee;
+}
+
+/* Style the select element */
+.filter-group select {
+  display: inline-block;
+  width: 100%;
+  padding: 12px 20px;
+  font-family: Inknut Antiqua;
+  font-size: 16px;
+  font-weight: bold;
+  border: 2px solid #3a4750;
+  border-radius: 8px;
+  background-color: #3a4750;
+  color: #eeeeee;
+  appearance: none;
+  cursor: pointer;
+  box-shadow: 0px 8px 15px rgba(82, 80, 80, 0.1);
+  transition: all 0.3s ease;
+}
+
+/* Hover and focus styles */
+.filter-group select:hover,
+.filter-group select:focus {
+  border-color: #00adb5;
+  box-shadow: 0px 8px 15px #00adb5;
+}
+
+/* Styling the options */
+option {
+  color: #eeeeee;
+  background-color: #3a4750;
+  padding: 10px;
+}
+
+option:hover {
+  color: #00adb5;
 }
