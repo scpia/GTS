@@ -1,1 +1,6 @@
-{"daemonlive": 3}
+{
+    "daemonlive": {
+        "current_score": 1,
+        "high_score": 1
+    }
+}
