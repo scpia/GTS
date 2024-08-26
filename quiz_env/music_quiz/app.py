@@ -21,35 +21,7 @@ sp_oauth = SpotifyOAuth(SPOTIPY_CLIENT_ID, SPOTIPY_CLIENT_SECRET, SPOTIPY_REDIRE
 def menü():
     return render_template('menü.html')
 
-@app.route('/quiz-fragen')
-def quiz_fragen():
-    # Lese die Filterparameter aus der Query-String
-    category_id = request.args.get('category')
-    difficulty = request.args.get('difficulty')
-    question_type = request.args.get('type')
-    print(question_type)
-    # Erstelle die URL für die API-Abfrage
-    url = "https://opentdb.com/api.php"
-    params = {
-        'amount': 10,  # Anzahl der Fragen (Beispielwert, kann angepasst werden)
-        'category': category_id,
-        'difficulty': difficulty,
-        'type': question_type
-    }
 
-    # Entferne None-Werte aus den Parametern
-    params = {key: value for key, value in params.items() if value is not None}
-
-    try:
-        # Hole die Fragen von der API
-        response = requests.get(url, params=params)
-        response.raise_for_status()  # Stelle sicher, dass die Anfrage erfolgreich war
-        questions = response.json()['results']
-        print(questions)
-    except Exception as e:
-        logging.error(f"Fehler beim Abrufen der Fragen: {e}")
-        questions = []
-    # Render die Template-Datei mit den Fragen
 @app.route('/quiz-fragen')
 def quiz_fragen():
     # Lese die Filterparameter aus der Query-String

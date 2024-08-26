@@ -11,20 +11,26 @@ body {
   height: 100vh;
 }
 
-h1 {
-  color: #e9b66f;
-}
-
-/* Container styling */
-.container {
-  background-color: white;
+.main-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  width: 80%;
+  max-width: 1200px;
   padding: 20px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
   background-color: #2e2e2e;
   border-radius: 10px;
-  box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-  text-align: center;
-  width: 350px;
+  position: relative; /* Allows positioning relative to the main container */
+}
+
+.scoreboard-container {
+  width: 25%;
+  margin-right: 20px;
+}
+
+.quiz-container {
+  width: 70%;
   position: relative;
 }
 
@@ -84,12 +90,11 @@ input[type="submit"]:hover {
 
 /* Suggestion Box Styling */
 #suggestions {
-  border: 1px solid #ccc;
-  max-height: 150px;
-  overflow-y: auto;
-  background-color: white;
-  width: auto; /* Auto width based on content */
-  min-width: 100%; /* Minimum width to match the input field */
+  margin-top: 2px; /* Small margin to create space below the input box */
+  background-color: #383838;
+  color: #FFFFFF;
+  border-radius: 5px;
+  overflow: hidden;
   position: absolute;
   top: 100%; /* Positions it directly below the input box */
   width: 100%; /* Ensures it matches the width of the input box */
@@ -130,45 +135,25 @@ input[type="submit"]:hover {
   position: relative;
 }
 
-.spotify_quiz-input-container-lable {
-  font-size: large;
-}
-/* Add styles for the quiz container */
-.quiz-container {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-top: 20px;
-}
-
-/* Style the form section */
-.quiz-form {
-  flex: 1;
+.artist-info-container {
+  position: absolute;
+  right: 0px;
+  top: 0px;
+  width: 150px; /* Adjusted width to better fit the space */
+  height: 150px; /* Set height to match the width */
+  background-color: #383838;
+  padding: 0; /* Remove padding to ensure the image stretches fully */
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  z-index: 1050;
+  overflow: hidden; /* Ensures that the image doesn't overflow out of the container */
 }
 
-/* Style the scoreboard section */
-.scoreboard {
-  flex: 0 0 250px;
-  padding: 20px;
-  border-left: 2px solid #ccc;
+#artist-cover {
+  width: 100%; /* Make the image fill the width of the container */
+  height: 100%; /* Make the image fill the height of the container */
+  background-size: cover;
+  background-position: center;
+  border-radius: 10px; /* Match the container's border-radius */
+  background-color: #333;
 }
-
-/* Style the scoreboard link */
-.scoreboard-link {
-  display: block;
-  margin-top: 20px;
-  text-align: center;
-  font-size: 1em;
-  text-decoration: none;
-  color: #007bff;
-  background-color: #f8f9fa;
-  border: 1px solid #007bff;
-  border-radius: 5px;
-  padding: 10px;
-}
-
-.scoreboard-link:hover {
-  background-color: #e2e6ea;
-  color: #0056b3;
-}
-
