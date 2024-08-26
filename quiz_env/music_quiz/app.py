@@ -170,6 +170,8 @@ def lyrics_guess():
                     song_title = selected_track['name']
                     song_artist = selected_track['artists'][0]['name']
 
+
+
                     lyrics = fetch_lyrics_from_genius(sp, song_title, song_artist)
                     filtered_lyrics = filter_lyrics(lyrics)
                     if not filtered_lyrics or len(filtered_lyrics) < 2:
@@ -177,6 +179,8 @@ def lyrics_guess():
 
                     random_index = random.randint(0, len(filtered_lyrics) - 4)
                     selected_verses = "\n".join(filtered_lyrics[random_index:random_index + 4])
+                    
+                    session['correct_song'] = song_title
 
                     return render_template("lyrics-guess-game.html", artist=artist_name, lyrics=selected_verses, correct_song=song_title, result=result)
 
