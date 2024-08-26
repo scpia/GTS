@@ -3,8 +3,17 @@ document.addEventListener("DOMContentLoaded", () => {
   const categoryId =
     new URLSearchParams(window.location.search).get("category") || "9"; // Standard auf Kategorie 9 (Allgemein)
 
-  const apiUrl = `https://opentdb.com/api.php?amount=10&category=${categoryId}`;
+  const typeId = new URLSearchParams(window.location.search).get("type") || ""; // Standard auf Kategorie 9 (Allgemein)
 
+  const difficultyId =
+    new URLSearchParams(window.location.search).get("difficulty") || ""; // Standard auf Kategorie 9 (Allgemein)
+
+  if ((typeId === "10") & (categoryId === "10")) {
+    typeId = "multiple";
+  }
+
+  const apiUrl = `https://opentdb.com/api.php?amount=10&category=${categoryId}&type=${typeId}&difficulty=${difficultyId}`;
+  console.log(apiUrl);
   // Array zum Speichern der richtigen Antworten im globalen Scope
   window.correctAnswers = []; // Sicherstellen, dass es global ist
 
@@ -14,16 +23,21 @@ document.addEventListener("DOMContentLoaded", () => {
   // Funktion zum Abrufen der Fragen
   const fetchQuestions = async () => {
     try {
-      const response = await fetch(apiUrl); // Einmalig und dann muss man auch nicht 5 sekunden so warten
+      let response = await fetch(apiUrl); // Einmalig und dann muss man auch nicht 5 sekunden so warten
       if (!response.ok) {
         const errorText = await response.text(); // Detaillierte Fehlermeldung
+        if (response.status === 429) {
+          console.warn("Zu viele Anfragen. Wartezeit...");
+          await wait(5000); // Warte 5 Sekunden
+          return fetchQuestions(); // Versuch es erneut
+        }
         throw new Error(
           `Network response was not ok. Status: ${response.status} ${response.statusText}. Response: ${errorText}`
         );
       }
 
-      const data = await response.json();
-
+      let data = await response.json();
+      console.log(data);
       if (data.response_code === 5) {
         throw new Error(
           "Invalid category ID or no questions available for this category."
@@ -75,15 +89,8 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   };
 
-  // Verzögerung vor dem Abrufen der Fragen
-  const startFetching = async () => {
-    console.log("Warte 5 Sekunden, bevor die Fragen abgerufen werden...");
-    await wait(5000); // Warte 5 Sekunden
-    await fetchQuestions(); // Dann Fragen abrufen
-  };
-
   // Aufruf der Startfunktion
-  startFetching();
+  fetchQuestions();
 });
 
 // Funktion zur Validierung der Antworten

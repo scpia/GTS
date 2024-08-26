@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Start Page</title>
+    <link rel="stylesheet" href="/static/start.css" />
+  </head>
+  <body>
+    <h1>Lyrics Guess Game</h1>
+
+    {% if error %}
+    <p style="color: red">{{ error }}</p>
+    {% endif %}
+
+    <form method="POST" action="/start">
+      <label for="artist">Enter the artist's name:</label>
+      <input type="text" id="artist" name="artist" required />
+      <button type="submit" name="acti" value="get_lyrics">Get Lyrics</button>
+    </form>
+
+    <!-- Optional: Link to go back to home or other pages -->
+    <a href="/">Home</a>
+  </body>
+</html>

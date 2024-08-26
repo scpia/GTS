@@ -8,9 +8,48 @@
   </head>
   <body>
     <div class="menu-container">
-      <h1 class="titel-themen-auswahl">Wähle ein Thema für die Fragen</h1>
+      <div class="fragen-header">
+        <h1 class="titel-themen-auswahl">Wähle ein Thema für die Fragen</h1>
+        <div class="fragen-header-nav">
+          <ul class="navbar-menu">
+            <li><a href="/" class="navbar-link">Home</a></li>
+            <li><a href="#about" class="navbar-link">About</a></li>
+            <li><a href="#services" class="navbar-link">Services</a></li>
+            <li><a href="#contact" class="navbar-link">Contact</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="filters-container">
+        <div class="filter-group">
+          <label class="selection-label" for="difficulty"
+            >Schwierigkeitsgrad:</label
+          >
+          <select id="difficulty">
+            <option value="">Alle</option>
+            <option value="easy">Einfach</option>
+            <option value="medium">Mittel</option>
+            <option value="hard">Schwer</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label class="selection-label" for="type">Fragentyp:</label>
+          <select id="type">
+            <option value="">Alle</option>
+            <option value="multiple">Multiple Choice</option>
+            <option value="boolean">Wahr/Falsch</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label class="selection-label" for="category">Kategorie:</label>
+          <select id="category">
+            <option value="">Alle</option>
+            <!-- Kategorien werden hier dynamisch hinzugefügt -->
+          </select>
+        </div>
+        <button id="apply-filters">Filter anwenden</button>
+      </div>
       <div id="categories-menu" class="button-container">
-        <!-- Kategorien werden hier dynamisch hinzugefügt -->
+        <!-- Filtered categories will be dynamically inserted here -->
       </div>
     </div>
     <script src="/static/get-questions-options.js"></script>

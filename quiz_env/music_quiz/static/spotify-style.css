@@ -1,71 +1,108 @@
-/* Flexbox centering */
-/* Flexbox centering */
-body,
-html {
+/* Body and main container styling as before */
+body {
+  font-family: Arial, sans-serif;
+  background-color: #202020;
+  color: #FFFFFF;
   margin: 0;
   padding: 0;
-  height: 100%;
   display: flex;
-  align-items: center;
   justify-content: center;
-  font-family: Inknut Antiqua;
-  background-color: #051f0b;
+  align-items: center;
+  height: 100vh;
 }
 
-/* Container styling */
-.container {
-  background-color: white;
+.main-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  width: 80%;
+  max-width: 1200px;
   padding: 20px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  background-color: #2e2e2e;
   border-radius: 10px;
-  box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-  text-align: center;
-  width: 350px;
+  position: relative; /* Allows positioning relative to the main container */
+}
+
+.scoreboard-container {
+  width: 25%;
+  margin-right: 20px;
+}
+
+.quiz-container {
+  width: 70%;
   position: relative;
 }
 
-/* Input field and button styling */
-input[type="text"] {
-  width: calc(100% - 20px); /* Adjust width to account for padding */
+.scoreboard-section {
   padding: 10px;
-  margin-top: 10px;
-  border: 1px solid #ccc;
+  background-color: #383838;
   border-radius: 5px;
-  font-size: 16px;
-  box-sizing: border-box;
+}
+
+.scoreboard-section h2 {
+  margin-top: 0;
+}
+
+.scoreboard-link {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 5px 10px;
+  background-color: #4CAF50;
+  color: white;
+  text-decoration: none;
+  border-radius: 5px;
+}
+
+.quiz-form-section {
+  margin-top: 20px;
+}
+
+.spotify_quiz-input-container {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 15px;
+  position: relative; /* Ensure elements inside this container are positioned relative to it */
+}
+
+.spotify_quiz-input-container-label {
+  margin-bottom: 5px;
+}
+
+input[type="text"], input[type="submit"] {
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  width: 100%; /* Ensures the input field takes full width of its container */
+  box-sizing: border-box; /* Ensures padding is included within the width */
 }
 
 input[type="submit"] {
-  width: 100%;
-  padding: 10px;
-  background-color: #007bff;
+  background-color: #1DB954;
   color: white;
-  border: none;
-  border-radius: 5px;
-  font-size: 16px;
   cursor: pointer;
-  transition: background-color 0.3s ease;
-  margin-top: 20px;
-  box-sizing: border-box;
+  margin-top: 10px;
 }
 
 input[type="submit"]:hover {
-  background-color: #0056b3;
+  background-color: #1ED760;
 }
 
-/* Suggestions dropdown styling */
+/* Suggestion Box Styling */
 #suggestions {
-  border: 1px solid #ccc;
-  max-height: 150px;
-  overflow-y: auto;
-  background-color: white;
-  width: auto; /* Auto width based on content */
-  min-width: 100%; /* Minimum width to match the input field */
-  position: absolute;
-  left: 0;
-  z-index: 1000;
+  margin-top: 2px; /* Small margin to create space below the input box */
+  background-color: #383838;
+  color: #FFFFFF;
   border-radius: 5px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  margin-top: 5px; /* Adds a small space between the input and the suggestions */
+  overflow: hidden;
+  position: absolute;
+  top: 100%; /* Positions it directly below the input box */
+  width: 100%; /* Ensures it matches the width of the input box */
+  max-height: 200px; /* Restricts the height to a reasonable value */
+  overflow-y: auto; /* Allows scrolling if there are many suggestions */
+  z-index: 1000; /* Lower than the input box */
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  transition: all 0.3s ease-in-out; /* Smooth transitions */
 }
 
 .suggestion-item {
@@ -73,27 +110,50 @@ input[type="submit"]:hover {
   cursor: pointer;
   display: flex;
   align-items: center;
+  transition: background-color 0.3s ease;
 }
 
 .suggestion-item img {
-  width: 40px;
-  height: 40px;
+  width: 30px;
+  height: 30px;
+  vertical-align: middle;
   margin-right: 10px;
-  border-radius: 5px;
+  border-radius: 3px;
+}
+
+.suggestion-item span {
+  white-space: nowrap; /* Prevent text from wrapping */
 }
 
 .suggestion-item:hover {
-  background-color: #f0f0f0;
+  background-color: #4CAF50;
 }
 
-/* Audio element styling */
-audio {
+/* Ensures the suggestion box takes the width of the input container */
+.spotify_quiz-input-container {
   width: 100%;
-  margin-top: 10px;
-  border-radius: 5px;
-  outline: none;
+  position: relative;
 }
 
-.spotify_quiz-input-container-lable {
-  font-size: large;
+.artist-info-container {
+  position: absolute;
+  right: 0px;
+  top: 0px;
+  width: 150px; /* Adjusted width to better fit the space */
+  height: 150px; /* Set height to match the width */
+  background-color: #383838;
+  padding: 0; /* Remove padding to ensure the image stretches fully */
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  z-index: 1050;
+  overflow: hidden; /* Ensures that the image doesn't overflow out of the container */
+}
+
+#artist-cover {
+  width: 100%; /* Make the image fill the width of the container */
+  height: 100%; /* Make the image fill the height of the container */
+  background-size: cover;
+  background-position: center;
+  border-radius: 10px; /* Match the container's border-radius */
+  background-color: #333;
 }

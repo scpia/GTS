@@ -1,8 +1,8 @@
 body {
-  font-family: Open Sans;
+  font-family: Inknut Antiqua;
   margin: 0;
   padding: 20px;
-  background-color: #041809;
+  background-color: #303841;
 }
 
 h1 {
@@ -35,8 +35,8 @@ h1 {
   gap: 20px; /* Abstand zwischen den Frageboxen */
 }
 .question {
-  background-color: #27ae60;
-  color: white;
+  background-color: #3a4750;
+  color: #eeeeee;
   margin: 5px;
   border: none;
   padding: 12px 24px;
@@ -102,4 +102,59 @@ button.check_for_win:hover {
   .question-box {
     flex: 1 1 100%; /* Vollbreite auf kleinen Bildschirmen */
   }
+}
+/* Navbar styles */
+.navbar {
+  background-color: #daa520;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: Inknut Antiqua;
+  color: #bba050;
+  border: black solid 4px;
+}
+
+.navbar-container {
+  background-color: #143406;
+  color: #bba050;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 74px;
+  width: 100%;
+  margin: 5px;
+  padding: 0 20px;
+}
+
+.navbar-logo {
+  font-size: 2rem;
+  text-decoration: none;
+  color: #bba050;
+}
+
+.navbar-menu {
+  list-style: none;
+  display: flex;
+}
+
+.navbar-link {
+  color: #bba050;
+  text-decoration: none;
+  padding: 0 15px;
+  font-size: 1.2rem;
+  transition: color 0.3s ease;
+}
+
+.navbar-link:hover {
+  color: #e9b61f;
+  border: black solid 2px;
+}
+
+.navbar-toggle {
+  display: none;
+  cursor: pointer;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 25px;
 }

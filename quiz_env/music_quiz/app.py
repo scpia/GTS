@@ -1,31 +1,192 @@
 from flask import Flask, render_template, request, jsonify, redirect, session, url_for, flash
-import requests  # Verwenden der requests-Bibliothek für API-Anfragen
 from flask_caching import Cache
-from spotipy.oauth2 import SpotifyOAuth
-import json
-import spotipy
-import random
-import logging
-import re
+from config import sp_oauth, SPOTIPY_CLIENT_ID, SPOTIPY_CLIENT_SECRET, SPOTIPY_REDIRECT_URI, SpotifyOAuth
+from spotify_utils import get_random_track, get_spotify_client, search_tracks, initialize_track_list, Cache
+from scoreboard_utils import reset_current_score, load_scoreboard, update_score, save_scoreboard
+import json, spotipy, logging, re, requests
+
+import lyricsgenius
 
 logging.basicConfig(level=logging.DEBUG)
 app = Flask(__name__)
-cache = Cache(config={'CACHE_TYPE': 'simple'})
+cache = Cache(app, config={'CACHE_TYPE': 'simple'})
 cache.init_app(app)
 app.secret_key = "PaulIstEinHs"  # Replace with your own secret key
-
-
+GENIUS_API_TOKEN = "XKguZrxNgVgiJKbq096Dum4gRW1zbmuMfKRAIVPVTrqMGWf29IXAmypSbcsm3hGJ"
 ##################################################################
 # Spotify Auth Details
-SPOTIPY_CLIENT_ID = "197fae76c16941eeb1004bb32363434d"  # Replace with your Spotify Client ID
-SPOTIPY_CLIENT_SECRET = "eed38db9ad374edb80efe73526291d9e"  # Replace with your Spotify Client Secret
-SPOTIPY_REDIRECT_URI = "http://127.0.0.1:5000/callback"
-
 sp_oauth = SpotifyOAuth(SPOTIPY_CLIENT_ID, SPOTIPY_CLIENT_SECRET, SPOTIPY_REDIRECT_URI,
                         scope="user-library-read user-top-read")
 
-def fetch_questions(category_id):
-    url = f'https://opentdb.com/api.php?amount=10&category={category_id}'
+# Genius API Client initialisieren
+genius = lyricsgenius.Genius(GENIUS_API_TOKEN)
+genius.remove_section_headers = True
+genius.excluded_terms = ["(Remix)", "(Live)"]
+genius.skip_non_songs = True
+
+
+SONGS_JSON_FILE = 'quiz_env/music_quiz/static/song-lyrics.json'
+
+def filter_lyrics(lyrics):
+    """
+    Entfernt unerwünschte Platzhalter wie [Hook] aus den Lyrics und unterteilt sie in Verse.
+    """
+    import re
+    # Regex-Muster für Platzhalter
+    patterns = [r'\[.*?\]', r'\(.*?\)', r'\{.*?\}']
+    
+    for pattern in patterns:
+        lyrics = re.sub(pattern, '', lyrics)
+
+    # Lyrics in Zeilen unterteilen und Leerzeilen entfernen
+    verses = lyrics.split("\n")
+    filtered_verses = [verse.strip() for verse in verses if verse.strip() != ""]
+
+    return filtered_verses
+
+
+def fetch_lyrics_from_genius(sp, song_title, artist_name):
+    """
+    Ruft die Songtexte von Genius für einen bestimmten Song und Künstler ab.
+    """
+    # Song von Genius suchen
+    song = genius.search_song(song_title, artist_name)
+    if not song:
+        raise ValueError(f"Text für den Song '{song_title}' konnte nicht abgerufen werden.")
+    
+    return song.lyrics
+
+def fetch_random_song_from_spotify(sp, search_query):
+    """
+    Ruft einen zufälligen Song von Spotify basierend auf der Suchabfrage ab.
+    """
+    sp = get_spotify_client()
+    results = sp.search(q=search_query, type='track', limit=50)
+    tracks = results['tracks']['items']
+
+    if not tracks:
+        raise ValueError("Keine Songs gefunden.")
+
+    # Zufälligen Song auswählen
+    selected_track = random.choice(tracks)
+    return selected_track#
+
+@app.route("/choose-artist", methods=["GET", "POST"])
+def choose_artist():
+    if request.method == "POST":
+        artist_name = request.form["artist"]
+        session['artist'] = artist_name
+        return redirect(url_for('lyrics_guess'))
+    return render_template("choose-artist.html")
+
+@app.route("/lyrics-guess", methods=["GET", "POST"])
+def lyrics_guess():
+    artist_name = session.get('artist')
+    if not artist_name:
+        return redirect(url_for('choose_artist'))
+    
+    if request.method == "POST":
+        action = request.form.get("action")
+        if action == "get_lyrics":
+            try:
+                sp = get_spotify_client()
+                if sp is None:
+                    raise ValueError("Nicht bei Spotify eingeloggt.")
+                
+                search_query = f'artist:{artist_name}'
+                selected_track = fetch_random_song_from_spotify(sp, search_query)
+                song_title = selected_track['name']
+                song_artist = selected_track['artists'][0]['name']
+
+                lyrics = fetch_lyrics_from_genius(sp, song_title, song_artist)
+                filtered_lyrics = filter_lyrics(lyrics)
+                if not filtered_lyrics or len(filtered_lyrics) < 2:
+                    raise ValueError("Nicht genügend gültige Verse gefunden.")
+
+                random_index = random.randint(0, len(filtered_lyrics) - 4)
+                selected_verses = "\n".join(filtered_lyrics[random_index:random_index + 4])
+
+                session['correct_song'] = song_title
+
+                return render_template("lyrics-guess-game.html", artist=artist_name, lyrics=selected_verses, correct_song=song_title)
+
+            except Exception as e:
+                logging.error(f"Error occurred: {str(e)}")
+                return render_template("lyrics-game.html", error="Fehler beim Abrufen der Lyrics. Bitte versuche es erneut.")
+        
+        elif action == "submit_guess":
+            user_guess = request.form["song"].strip().lower()
+            correct_song = session.get('correct_song', '').strip().lower()
+
+            if user_guess == correct_song:
+                result = f"Richtig! Es ist tatsächlich aus dem Song '{correct_song}'."
+                # Wähle einen neuen Song aus, um weiterzumachen
+                try:
+                    sp = get_spotify_client()
+                    if sp is None:
+                        raise ValueError("Nicht bei Spotify eingeloggt.")
+                    
+                    search_query = f'artist:{artist_name}'
+                    selected_track = fetch_random_song_from_spotify(sp, search_query)
+                    song_title = selected_track['name']
+                    song_artist = selected_track['artists'][0]['name']
+
+                    lyrics = fetch_lyrics_from_genius(sp, song_title, song_artist)
+                    filtered_lyrics = filter_lyrics(lyrics)
+                    if not filtered_lyrics or len(filtered_lyrics) < 2:
+                        raise ValueError("Nicht genügend gültige Verse gefunden.")
+
+                    random_index = random.randint(0, len(filtered_lyrics) - 4)
+                    selected_verses = "\n".join(filtered_lyrics[random_index:random_index + 4])
+
+                    session['correct_song'] = song_title
+
+                    return render_template("lyrics-guess-game.html", artist=artist_name, lyrics=selected_verses, correct_song=song_title, result=result)
+
+                except Exception as e:
+                    logging.error(f"Error occurred: {str(e)}")
+                    return render_template("lyrics-game.html", error="Fehler beim Abrufen neuer Lyrics. Bitte versuche es erneut.")
+            else:
+                result = f"Falsch. Der Song war '{correct_song}'. Versuch's nochmal!"
+
+                # Zeige erneut Lyrics vom gleichen Künstler
+                try:
+                    sp = get_spotify_client()
+                    if sp is None:
+                        raise ValueError("Nicht bei Spotify eingeloggt.")
+                    
+                    search_query = f'artist:{artist_name}'
+                    selected_track = fetch_random_song_from_spotify(sp, search_query)
+                    song_title = selected_track['name']
+                    song_artist = selected_track['artists'][0]['name']
+
+
+
+                    lyrics = fetch_lyrics_from_genius(sp, song_title, song_artist)
+                    filtered_lyrics = filter_lyrics(lyrics)
+                    if not filtered_lyrics or len(filtered_lyrics) < 2:
+                        raise ValueError("Nicht genügend gültige Verse gefunden.")
+
+                    random_index = random.randint(0, len(filtered_lyrics) - 4)
+                    selected_verses = "\n".join(filtered_lyrics[random_index:random_index + 4])
+                    
+                    session['correct_song'] = song_title
+
+                    return render_template("lyrics-guess-game.html", artist=artist_name, lyrics=selected_verses, correct_song=song_title, result=result)
+
+                except Exception as e:
+                    logging.error(f"Error occurred: {str(e)}")
+                    return render_template("lyrics-game.html", error="Fehler beim Abrufen neuer Lyrics. Bitte versuche es erneut.")
+
+    # Initiale Seite zum Abrufen der Lyrics
+    return render_template("lyrics-game.html")
+#
+#
+# Main application and quiz teil
+#
+#
+def fetch_questions(type_id,category_id,difficulty_id):
+    url = f'https://opentdb.com/api.php?amount=10&type={type_id}&category={category_id}&difficulty={difficulty_id}'
     response = requests.get(url)  # Verwenden von requests.get() statt request.get()
     data = response.json()
     return data['results']
@@ -39,9 +200,36 @@ def load_questions():
 def menü():
     return render_template('menü.html')
 
-@app.route('/quiz-fragen/<int:category_id>')
-def index(category_id):
-    questions = fetch_questions(category_id)
+
+@app.route('/quiz-fragen')
+def quiz_fragen():
+    # Lese die Filterparameter aus der Query-String
+    category_id = request.args.get('category')
+    difficulty = request.args.get('difficulty')
+    question_type = request.args.get('type')
+    print(question_type)
+    # Erstelle die URL für die API-Abfrage
+    url = "https://opentdb.com/api.php"
+    params = {
+        'amount': 10,  # Anzahl der Fragen (Beispielwert, kann angepasst werden)
+        'category': category_id,
+        'difficulty': difficulty,
+        'type': question_type
+    }
+
+    # Entferne None-Werte aus den Parametern
+    params = {key: value for key, value in params.items() if value is not None}
+
+    try:
+        # Hole die Fragen von der API
+        response = requests.get(url, params=params)
+        response.raise_for_status()  # Stelle sicher, dass die Anfrage erfolgreich war
+        questions = response.json()['results']
+        print(questions)
+    except Exception as e:
+        logging.error(f"Fehler beim Abrufen der Fragen: {e}")
+        questions = []
+    # Render die Template-Datei mit den Fragen
     return render_template('index.html', questions=questions)
 
 @app.route('/fragen-themen')
@@ -71,6 +259,7 @@ def get_categories():
         return jsonify(categories)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
 # Spotify Authentication Route
 @app.route('/spotify-login')
 def spotify_login():
@@ -91,12 +280,24 @@ def callback():
         return redirect(url_for('spotify_login'))
 
     session["token_info"] = token_info
+    sp = get_spotify_client()
+    sp = spotipy.Spotify(auth=token_info['access_token'])
+    user_info = sp.current_user()  # Get current user info
+    session["spotify_id"] = user_info['id']  # Store Spotify ID in session
+    session["display_name"] = user_info['display_name']  # Optionally store display name
+
     return redirect(url_for('choose'))
 
 def get_spotify_client():
     token_info = session.get("token_info", None)
     if not token_info:
         return None
+
+    # Check if the token has expired
+    if sp_oauth.is_token_expired(token_info):
+        token_info = sp_oauth.refresh_access_token(token_info['refresh_token'])
+        session['token_info'] = token_info
+
     sp = spotipy.Spotify(auth=token_info['access_token'])
     return sp
 
@@ -105,137 +306,62 @@ def get_spotify_client():
 def artist():
     if request.method == 'POST':
         data = request.get_json()
-        artist_name = data.get('artist_name')
-        if artist_name:
-            session['artist'] = artist_name
+        artist_id = data.get('id')  # Get the artist_id from the POST data
+
+        if artist_id:
+            session['artist_id'] = artist_id
+
+            sp = get_spotify_client()
+            if not sp:
+                return jsonify({"success": False, "message": "Spotify client not authenticated"}), 401
+
+            # Fetch the artist's details directly using the artist_id
+            artist_info = sp.artist(artist_id)
+            artist_cover = artist_info['images'][0]['url'] if artist_info['images'] else 'default_image_url'
+            session['artist_cover'] = artist_cover
+            session['artist_name'] = artist_info['name']
+
             return jsonify({"success": True})
         else:
-            return jsonify({"success": False}), 400
+            return jsonify({"success": False, "message": "Artist ID not provided"}), 400
     return render_template('artist.html')  # Render a form or information page
 
-# Select whether to play in Artist Mode or Playlist Mode
+# Select whether you want to play with artist or playlist
 @app.route('/choose', methods=['GET', 'POST'])
 def choose():
+    sp = get_spotify_client()
     if request.method == 'POST':
         choice = request.form.get('choice')
+        
         if choice == 'artist':
             return redirect(url_for('artist'))
+        
         elif choice == 'playlist':
             playlist_link = request.form.get('playlist_link')
-            session['playlist_link'] = playlist_link
-            return redirect(url_for('spotify_quiz'))
+            if not playlist_link:  # Validate the playlist link
+                flash("Please provide a valid playlist link.", "error")
+                return redirect(url_for('choose'))
+
+            # Extract the playlist ID using regex
+            playlist_id_match = re.search(r'playlist/([a-zA-Z0-9]+)', playlist_link)
+            if playlist_id_match:
+                playlist_id = playlist_id_match.group(1)
+            else:
+                flash("Invalid Spotify playlist link.", "error")
+                return redirect(url_for('choose'))
+            
+            try:
+                # Fetch the playlist cover image using the playlist ID
+                cover_image = sp.playlist_cover_image(playlist_id)
+                session['artist_cover'] = cover_image[0]['url']  # Assuming the first image is the one you need
+                session['playlist_link'] = playlist_link
+                return redirect(url_for('spotify_quiz'))
+            except Exception as e:
+                flash(f"An error occurred: {str(e)}", "error")
+                return redirect(url_for('choose'))
     
     return render_template('choose.html')
 
-
-# Function to extract Playlist ID from Spotify Playlist URL
-def extract_playlist_id(url):
-    """
-    Extracts the playlist ID from a Spotify playlist URL.
-    """
-    match = re.search(r'playlist/([a-zA-Z0-9]+)', url)
-    if match:
-        return match.group(1)
-    return None
-
-# Function to extract all Tracks from a given Playlist
-@cache.memoize(timeout=3600)  # Cache for 1 hour
-def get_all_tracks_from_playlist(sp, playlist_id):
-    tracks = []
-    results = sp.playlist_tracks(playlist_id)
-    filtered_tracks = [track for track in results['items'] if 'instrumental' not in track['track']['name'].lower()]
-    tracks.extend(filtered_tracks)
-
-    while results['next']:
-        results = sp.next(results)
-        filtered_tracks = [track for track in results['items'] if 'instrumental' not in track['track']['name'].lower()]
-        tracks.extend(filtered_tracks)
-
-    return tracks
-
-# Generate Playlist based on input for a session
-def initialize_track_list(sp):
-    artist_name = session.get('artist')
-    playlist_link = session.get('playlist_link')
-    
-    if artist_name:
-        results = sp.search(q=f'artist:{artist_name}', type='artist', limit=1)
-        artist = results['artists']['items']
-        
-        if not artist:
-            flash(f"No artist found with name '{artist_name}'", "danger")
-            return None
-        
-        artist_id = artist[0]['id']
-        albums = sp.artist_albums(artist_id, album_type='album', limit=50)
-        album_ids = [album['id'] for album in albums['items']]
-
-        # Store album_ids or a reference instead of full tracks
-        session['album_ids'] = album_ids
-        session.modified = True
-
-    elif playlist_link:
-        playlist_id = extract_playlist_id(playlist_link)
-
-        if not playlist_id:
-            flash("Invalid playlist URL.", "danger")
-            return None
-        
-        # Store playlist_id instead of full tracks
-        session['playlist_id'] = playlist_id
-        session.modified = True
-
-    else:
-        # Handle other cases
-        session['search_keyword'] = 'Farid Bang'
-        session.modified = True
-
-# Extract Tracks from initialisze_track_list
-def get_tracks_from_session(sp):
-    album_ids = session.get('album_ids')
-    playlist_id = session.get('playlist_id')
-    keyword = session.get('search_keyword')
-    is_Playlist = False
-
-    if album_ids:
-        # Fetch tracks based on album_ids
-        tracks = []
-        chosen_album = random.choice(album_ids)
-        album_tracks = sp.album_tracks(chosen_album)
-        filtered_tracks = [track for track in album_tracks['items'] if 'instrumental' not in track['name'].lower()]
-        tracks.extend(filtered_tracks)
-        return tracks, is_Playlist
-
-    elif playlist_id:
-        # Fetch tracks based on playlist_id
-        tracks = get_all_tracks_from_playlist(sp, playlist_id)
-        is_Playlist = True
-        return tracks, is_Playlist
-
-    elif keyword:
-        # Fetch tracks based on search keyword
-        tracks = search_tracks(sp, keyword)
-        return tracks
-
-    return [], is_Playlist
-
-# Select a random Track from the track list in the session
-def get_random_track(sp):
-    tracks, is_Playlist = get_tracks_from_session(sp)
-    if not tracks:
-        flash("Track list is empty or not initialized. Please restart the quiz.", "danger")
-        return None
-
-    track = random.choice(tracks)
-    return track, is_Playlist
-
-@cache.memoize(timeout=600)  # Cache search results for 10 minutes
-def search_tracks(sp, query):
-    results = sp.search(q=query, type='track', limit=10)
-    tracks = results['tracks']['items']
-    return [{'name': track['name'], 
-             'artist': track['artists'][0]['name'], 
-             'album_cover': track['album']['images'][0]['url']} for track in tracks]
 
 # Function to display Suggestion in Guessing State --> Song Guess
 @app.route('/search')
@@ -255,59 +381,85 @@ def search():
         return jsonify({'songs': []}), 500  # Internal Server Error
 
 # Function to display Suggestion in Artist Query
-@cache.memoize(timeout=600)  # Cache search results for 10 minutes
 @app.route('/search_artist')
+@cache.cached(timeout=60)
 def search_artist():
     query = request.args.get('q')
     sp = get_spotify_client()
-    
+
     # Check if API Connection is established
     if sp is None:
         return jsonify({'artists': []}), 401  # Not authenticated
 
     try:
         # Perform search for artists based on the query
-        results = sp.search(q=f'artist:{query}', type='artist', limit=5)
+        results = sp.search(q=f'artist:{query}', type='artist', limit=10)
         artists = results['artists']['items']
         
-        # Use a dictionary to avoid duplicates
-        unique_artists = {artist['name']: artist for artist in artists}
-        
-        # Create a list of artist suggestions including their name and image
-        artist_suggestions = [
-            {
-                'artist': artist['name'],
-                'image': artist['images'][0]['url'] if artist['images'] else 'default_image_url'
-            } for artist in unique_artists.values()
-        ]
-        
+        # Use a dictionary to track unique artist names and IDs
+        unique_artists = {}
+        artist_suggestions = []
+
+        for artist in artists:
+            artist_name = artist['name'].lower()  # Normalize the name to lower case for consistency
+            artist_id = artist['id']
+
+            # Create a unique key based on artist name and ID to avoid duplicates
+            unique_key = f"{artist_name}"
+            
+            if unique_key not in unique_artists:
+                unique_artists[unique_key] = True  # Mark this artist as seen
+                
+                # Handle the artist image (use a default image if not available)
+                artist_image = artist['images'][0]['url'] if artist['images'] else url_for('static', filename='default_image.png')
+                
+                artist_suggestions.append({
+                    'artist': artist['name'],  # Use the original name (not lowercased)
+                    'id': artist_id,
+                    'image': artist_image
+                })
+
         return jsonify({'artists': artist_suggestions})
     except Exception as e:
         logging.error(f"Artist search failed: {e}")
         return jsonify({'artists': []}), 500  # Internal Server Error
 
 
-# Actually Game Logic
+@app.route('/scoreboard')
+def scoreboard():
+    scoreboard = load_scoreboard()
+    # Sort the scoreboard by score in descending order
+    sorted_scoreboard = sorted(scoreboard.items(), key=lambda x: x[1], reverse=True)
+    return render_template('scoreboard.html', scoreboard=sorted_scoreboard)
+
+
 @app.route('/spotify-quiz', methods=['GET', 'POST'])
 def spotify_quiz():
     sp = get_spotify_client()
     
-    # Check if API Connection is Active
     if sp is None:
         logging.debug("Spotify client is None, redirecting to login")
         return redirect(url_for('spotify_login'))
 
-    # Handle GET State
+    user_id = session.get('spotify_id')
+    scoreboard = load_scoreboard()
+    
+    user_scores = scoreboard.get(user_id, {})
+    if isinstance(user_scores, int):  # Handle old structure
+        user_scores = {"current_score": 0, "high_score": user_scores}
+    
+    current_score = user_scores.get('current_score', 0)
+    high_score = user_scores.get('high_score', 0)
+    
     if request.method == 'GET':
-        # Initialize the track list if not already present
-        if 'track_list' not in session:
-            initialize_track_list(sp)
+        initialize_track_list(sp)
+        if not session.get('album_ids') and session.get('playlist_id'):
+            reset_current_score(user_id)  # Reset current score for new game
 
-        # Fetch random Track from Tracklist
         track, is_Playlist = get_random_track(sp)
 
-        if not track:
-            return redirect(url_for('spotify_quiz'))
+        if track is None:
+            return redirect(url_for('spotify_quiz'))  # Or return an error page
 
         # Handle case when playing with a Playlist or Artist
         if is_Playlist:
@@ -318,29 +470,32 @@ def spotify_quiz():
             session['track_name'] = track['name'].lower()
             session['track_artist'] = track['artists'][0]['name'].lower()
             session['track_preview'] = track['preview_url']
-        return render_template('spotify_quiz.html', preview_url=session['track_preview'])
 
-    # Handle POST State
+        return render_template('spotify_quiz.html', 
+                               preview_url=session['track_preview'],
+                               current_score=current_score,
+                               high_score=high_score,
+                               artist_cover=session.get('artist_cover'),
+                               artist_name=session.get('artist_name'))
+
     elif request.method == 'POST':
-        # Fetch user input and init. correct guess
         user_guess = request.form.get('song_guess', '').strip().lower()
         correct_song_name = session.get('track_name')
         correct_artist_name = session.get('track_artist')
+        spotify_id = session.get('spotify_id')
 
         if correct_song_name in user_guess and correct_artist_name in user_guess:
             flash("Correct! Well done!", "success")
+            update_score(spotify_id, 1)  # Update the score for the user
         else:
             flash(f"Wrong! The correct answer was '{correct_song_name}' by '{correct_artist_name}'", "danger")
 
-        # Continue to the next track
         track, is_Playlist = get_random_track(sp)
-        if not track:
+        if track is None:
             flash("No more tracks available! Please refresh the quiz.", "info")
-            # Optionally handle case where no tracks are left
+            return redirect(url_for('spotify_quiz'))  # Or handle as needed
 
         return redirect(url_for('spotify_quiz'))
-
-
 
 
 if __name__ == '__main__':

@@ -1,0 +1,866 @@
+[
+  {
+    "id": 9,
+    "name": "General Knowledge (easy, multiple)",
+    "difficulty": "easy",
+    "type": "multiple"
+  },
+  {
+    "id": 9,
+    "name": "General Knowledge (easy, boolean)",
+    "difficulty": "easy",
+    "type": "boolean"
+  },
+  {
+    "id": 9,
+    "name": "General Knowledge (medium, multiple)",
+    "difficulty": "medium",
+    "type": "multiple"
+  },
+  {
+    "id": 9,
+    "name": "General Knowledge (medium, boolean)",
+    "difficulty": "medium",
+    "type": "boolean"
+  },
+  {
+    "id": 9,
+    "name": "General Knowledge (hard, multiple)",
+    "difficulty": "hard",
+    "type": "multiple"
+  },
+  {
+    "id": 9,
+    "name": "General Knowledge (hard, boolean)",
+    "difficulty": "hard",
+    "type": "boolean"
+  },
+  {
+    "id": 10,
+    "name": "Entertainment: Books (easy, multiple)",
+    "difficulty": "easy",
+    "type": "multiple"
+  },
+  {
+    "id": 10,
+    "name": "Entertainment: Books (easy, boolean)",
+    "difficulty": "easy",
+    "type": "boolean"
+  },
+  {
+    "id": 10,
+    "name": "Entertainment: Books (medium, multiple)",
+    "difficulty": "medium",
+    "type": "multiple"
+  },
+  {
+    "id": 10,
+    "name": "Entertainment: Books (medium, boolean)",
+    "difficulty": "medium",
+    "type": "boolean"
+  },
+  {
+    "id": 10,
+    "name": "Entertainment: Books (hard, multiple)",
+    "difficulty": "hard",
+    "type": "multiple"
+  },
+  {
+    "id": 10,
+    "name": "Entertainment: Books (hard, boolean)",
+    "difficulty": "hard",
+    "type": "boolean"
+  },
+  {
+    "id": 11,
+    "name": "Entertainment: Film (easy, multiple)",
+    "difficulty": "easy",
+    "type": "multiple"
+  },
+  {
+    "id": 11,
+    "name": "Entertainment: Film (easy, boolean)",
+    "difficulty": "easy",
+    "type": "boolean"
+  },
+  {
+    "id": 11,
+    "name": "Entertainment: Film (medium, multiple)",
+    "difficulty": "medium",
+    "type": "multiple"
+  },
+  {
+    "id": 11,
+    "name": "Entertainment: Film (medium, boolean)",
+    "difficulty": "medium",
+    "type": "boolean"
+  },
+  {
+    "id": 11,
+    "name": "Entertainment: Film (hard, multiple)",
+    "difficulty": "hard",
+    "type": "multiple"
+  },
+  {
+    "id": 11,
+    "name": "Entertainment: Film (hard, boolean)",
+    "difficulty": "hard",
+    "type": "boolean"
+  },
+  {
+    "id": 12,
+    "name": "Entertainment: Music (easy, multiple)",
+    "difficulty": "easy",
+    "type": "multiple"
+  },
+  {
+    "id": 12,
+    "name": "Entertainment: Music (easy, boolean)",
+    "difficulty": "easy",
+    "type": "boolean"
+  },
+  {
+    "id": 12,
+    "name": "Entertainment: Music (medium, multiple)",
+    "difficulty": "medium",
+    "type": "multiple"
+  },
+  {
+    "id": 12,
+    "name": "Entertainment: Music (medium, boolean)",
+    "difficulty": "medium",
+    "type": "boolean"
+  },
+  {
+    "id": 12,
+    "name": "Entertainment: Music (hard, multiple)",
+    "difficulty": "hard",
+    "type": "multiple"
+  },
+  {
+    "id": 12,
+    "name": "Entertainment: Music (hard, boolean)",
+    "difficulty": "hard",
+    "type": "boolean"
+  },
+  {
+    "id": 13,
+    "name": "Entertainment: Musicals & Theatres (easy, multiple)",
+    "difficulty": "easy",
+    "type": "multiple"
+  },
+  {
+    "id": 13,
+    "name": "Entertainment: Musicals & Theatres (easy, boolean)",
+    "difficulty": "easy",
+    "type": "boolean"
+  },
+  {
+    "id": 13,
+    "name": "Entertainment: Musicals & Theatres (medium, multiple)",
+    "difficulty": "medium",
+    "type": "multiple"
+  },
+  {
+    "id": 13,
+    "name": "Entertainment: Musicals & Theatres (medium, boolean)",
+    "difficulty": "medium",
+    "type": "boolean"
+  },
+  {
+    "id": 13,
+    "name": "Entertainment: Musicals & Theatres (hard, multiple)",
+    "difficulty": "hard",
+    "type": "multiple"
+  },
+  {
+    "id": 13,
+    "name": "Entertainment: Musicals & Theatres (hard, boolean)",
+    "difficulty": "hard",
+    "type": "boolean"
+  },
+  {
+    "id": 14,
+    "name": "Entertainment: Television (easy, multiple)",
+    "difficulty": "easy",
+    "type": "multiple"
+  },
+  {
+    "id": 14,
+    "name": "Entertainment: Television (easy, boolean)",
+    "difficulty": "easy",
+    "type": "boolean"
+  },
+  {
+    "id": 14,
+    "name": "Entertainment: Television (medium, multiple)",
+    "difficulty": "medium",
+    "type": "multiple"
+  },
+  {
+    "id": 14,
+    "name": "Entertainment: Television (medium, boolean)",
+    "difficulty": "medium",
+    "type": "boolean"
+  },
+  {
+    "id": 14,
+    "name": "Entertainment: Television (hard, multiple)",
+    "difficulty": "hard",
+    "type": "multiple"
+  },
+  {
+    "id": 14,
+    "name": "Entertainment: Television (hard, boolean)",
+    "difficulty": "hard",
+    "type": "boolean"
+  },
+  {
+    "id": 15,
+    "name": "Entertainment: Video Games (easy, multiple)",
+    "difficulty": "easy",
+    "type": "multiple"
+  },
+  {
+    "id": 15,
+    "name": "Entertainment: Video Games (easy, boolean)",
+    "difficulty": "easy",
+    "type": "boolean"
+  },
+  {
+    "id": 15,
+    "name": "Entertainment: Video Games (medium, multiple)",
+    "difficulty": "medium",
+    "type": "multiple"
+  },
+  {
+    "id": 15,
+    "name": "Entertainment: Video Games (medium, boolean)",
+    "difficulty": "medium",
+    "type": "boolean"
+  },
+  {
+    "id": 15,
+    "name": "Entertainment: Video Games (hard, multiple)",
+    "difficulty": "hard",
+    "type": "multiple"
+  },
+  {
+    "id": 15,
+    "name": "Entertainment: Video Games (hard, boolean)",
+    "difficulty": "hard",
+    "type": "boolean"
+  },
+  {
+    "id": 16,
+    "name": "Entertainment: Board Games (easy, multiple)",
+    "difficulty": "easy",
+    "type": "multiple"
+  },
+  {
+    "id": 16,
+    "name": "Entertainment: Board Games (easy, boolean)",
+    "difficulty": "easy",
+    "type": "boolean"
+  },
+  {
+    "id": 16,
+    "name": "Entertainment: Board Games (medium, multiple)",
+    "difficulty": "medium",
+    "type": "multiple"
+  },
+  {
+    "id": 16,
+    "name": "Entertainment: Board Games (medium, boolean)",
+    "difficulty": "medium",
+    "type": "boolean"
+  },
+  {
+    "id": 16,
+    "name": "Entertainment: Board Games (hard, multiple)",
+    "difficulty": "hard",
+    "type": "multiple"
+  },
+  {
+    "id": 16,
+    "name": "Entertainment: Board Games (hard, boolean)",
+    "difficulty": "hard",
+    "type": "boolean"
+  },
+  {
+    "id": 17,
+    "name": "Science & Nature (easy, multiple)",
+    "difficulty": "easy",
+    "type": "multiple"
+  },
+  {
+    "id": 17,
+    "name": "Science & Nature (easy, boolean)",
+    "difficulty": "easy",
+    "type": "boolean"
+  },
+  {
+    "id": 17,
+    "name": "Science & Nature (medium, multiple)",
+    "difficulty": "medium",
+    "type": "multiple"
+  },
+  {
+    "id": 17,
+    "name": "Science & Nature (medium, boolean)",
+    "difficulty": "medium",
+    "type": "boolean"
+  },
+  {
+    "id": 17,
+    "name": "Science & Nature (hard, multiple)",
+    "difficulty": "hard",
+    "type": "multiple"
+  },
+  {
+    "id": 17,
+    "name": "Science & Nature (hard, boolean)",
+    "difficulty": "hard",
+    "type": "boolean"
+  },
+  {
+    "id": 18,
+    "name": "Science: Computers (easy, multiple)",
+    "difficulty": "easy",
+    "type": "multiple"
+  },
+  {
+    "id": 18,
+    "name": "Science: Computers (easy, boolean)",
+    "difficulty": "easy",
+    "type": "boolean"
+  },
+  {
+    "id": 18,
+    "name": "Science: Computers (medium, multiple)",
+    "difficulty": "medium",
+    "type": "multiple"
+  },
+  {
+    "id": 18,
+    "name": "Science: Computers (medium, boolean)",
+    "difficulty": "medium",
+    "type": "boolean"
+  },
+  {
+    "id": 18,
+    "name": "Science: Computers (hard, multiple)",
+    "difficulty": "hard",
+    "type": "multiple"
+  },
+  {
+    "id": 18,
+    "name": "Science: Computers (hard, boolean)",
+    "difficulty": "hard",
+    "type": "boolean"
+  },
+  {
+    "id": 19,
+    "name": "Science: Mathematics (easy, multiple)",
+    "difficulty": "easy",
+    "type": "multiple"
+  },
+  {
+    "id": 19,
+    "name": "Science: Mathematics (easy, boolean)",
+    "difficulty": "easy",
+    "type": "boolean"
+  },
+  {
+    "id": 19,
+    "name": "Science: Mathematics (medium, multiple)",
+    "difficulty": "medium",
+    "type": "multiple"
+  },
+  {
+    "id": 19,
+    "name": "Science: Mathematics (medium, boolean)",
+    "difficulty": "medium",
+    "type": "boolean"
+  },
+  {
+    "id": 19,
+    "name": "Science: Mathematics (hard, multiple)",
+    "difficulty": "hard",
+    "type": "multiple"
+  },
+  {
+    "id": 19,
+    "name": "Science: Mathematics (hard, boolean)",
+    "difficulty": "hard",
+    "type": "boolean"
+  },
+  {
+    "id": 20,
+    "name": "Mythology (easy, multiple)",
+    "difficulty": "easy",
+    "type": "multiple"
+  },
+  {
+    "id": 20,
+    "name": "Mythology (easy, boolean)",
+    "difficulty": "easy",
+    "type": "boolean"
+  },
+  {
+    "id": 20,
+    "name": "Mythology (medium, multiple)",
+    "difficulty": "medium",
+    "type": "multiple"
+  },
+  {
+    "id": 20,
+    "name": "Mythology (medium, boolean)",
+    "difficulty": "medium",
+    "type": "boolean"
+  },
+  {
+    "id": 20,
+    "name": "Mythology (hard, multiple)",
+    "difficulty": "hard",
+    "type": "multiple"
+  },
+  {
+    "id": 20,
+    "name": "Mythology (hard, boolean)",
+    "difficulty": "hard",
+    "type": "boolean"
+  },
+  {
+    "id": 21,
+    "name": "Sports (easy, multiple)",
+    "difficulty": "easy",
+    "type": "multiple"
+  },
+  {
+    "id": 21,
+    "name": "Sports (easy, boolean)",
+    "difficulty": "easy",
+    "type": "boolean"
+  },
+  {
+    "id": 21,
+    "name": "Sports (medium, multiple)",
+    "difficulty": "medium",
+    "type": "multiple"
+  },
+  {
+    "id": 21,
+    "name": "Sports (medium, boolean)",
+    "difficulty": "medium",
+    "type": "boolean"
+  },
+  {
+    "id": 21,
+    "name": "Sports (hard, multiple)",
+    "difficulty": "hard",
+    "type": "multiple"
+  },
+  {
+    "id": 21,
+    "name": "Sports (hard, boolean)",
+    "difficulty": "hard",
+    "type": "boolean"
+  },
+  {
+    "id": 22,
+    "name": "Geography (easy, multiple)",
+    "difficulty": "easy",
+    "type": "multiple"
+  },
+  {
+    "id": 22,
+    "name": "Geography (easy, boolean)",
+    "difficulty": "easy",
+    "type": "boolean"
+  },
+  {
+    "id": 22,
+    "name": "Geography (medium, multiple)",
+    "difficulty": "medium",
+    "type": "multiple"
+  },
+  {
+    "id": 22,
+    "name": "Geography (medium, boolean)",
+    "difficulty": "medium",
+    "type": "boolean"
+  },
+  {
+    "id": 22,
+    "name": "Geography (hard, multiple)",
+    "difficulty": "hard",
+    "type": "multiple"
+  },
+  {
+    "id": 22,
+    "name": "Geography (hard, boolean)",
+    "difficulty": "hard",
+    "type": "boolean"
+  },
+  {
+    "id": 23,
+    "name": "History (easy, multiple)",
+    "difficulty": "easy",
+    "type": "multiple"
+  },
+  {
+    "id": 23,
+    "name": "History (easy, boolean)",
+    "difficulty": "easy",
+    "type": "boolean"
+  },
+  {
+    "id": 23,
+    "name": "History (medium, multiple)",
+    "difficulty": "medium",
+    "type": "multiple"
+  },
+  {
+    "id": 23,
+    "name": "History (medium, boolean)",
+    "difficulty": "medium",
+    "type": "boolean"
+  },
+  {
+    "id": 23,
+    "name": "History (hard, multiple)",
+    "difficulty": "hard",
+    "type": "multiple"
+  },
+  {
+    "id": 23,
+    "name": "History (hard, boolean)",
+    "difficulty": "hard",
+    "type": "boolean"
+  },
+  {
+    "id": 24,
+    "name": "Politics (easy, multiple)",
+    "difficulty": "easy",
+    "type": "multiple"
+  },
+  {
+    "id": 24,
+    "name": "Politics (easy, boolean)",
+    "difficulty": "easy",
+    "type": "boolean"
+  },
+  {
+    "id": 24,
+    "name": "Politics (medium, multiple)",
+    "difficulty": "medium",
+    "type": "multiple"
+  },
+  {
+    "id": 24,
+    "name": "Politics (medium, boolean)",
+    "difficulty": "medium",
+    "type": "boolean"
+  },
+  {
+    "id": 24,
+    "name": "Politics (hard, multiple)",
+    "difficulty": "hard",
+    "type": "multiple"
+  },
+  {
+    "id": 24,
+    "name": "Politics (hard, boolean)",
+    "difficulty": "hard",
+    "type": "boolean"
+  },
+  {
+    "id": 25,
+    "name": "Art (easy, multiple)",
+    "difficulty": "easy",
+    "type": "multiple"
+  },
+  {
+    "id": 25,
+    "name": "Art (easy, boolean)",
+    "difficulty": "easy",
+    "type": "boolean"
+  },
+  {
+    "id": 25,
+    "name": "Art (medium, multiple)",
+    "difficulty": "medium",
+    "type": "multiple"
+  },
+  {
+    "id": 25,
+    "name": "Art (medium, boolean)",
+    "difficulty": "medium",
+    "type": "boolean"
+  },
+  {
+    "id": 25,
+    "name": "Art (hard, multiple)",
+    "difficulty": "hard",
+    "type": "multiple"
+  },
+  {
+    "id": 25,
+    "name": "Art (hard, boolean)",
+    "difficulty": "hard",
+    "type": "boolean"
+  },
+  {
+    "id": 26,
+    "name": "Celebrities (easy, multiple)",
+    "difficulty": "easy",
+    "type": "multiple"
+  },
+  {
+    "id": 26,
+    "name": "Celebrities (easy, boolean)",
+    "difficulty": "easy",
+    "type": "boolean"
+  },
+  {
+    "id": 26,
+    "name": "Celebrities (medium, multiple)",
+    "difficulty": "medium",
+    "type": "multiple"
+  },
+  {
+    "id": 26,
+    "name": "Celebrities (medium, boolean)",
+    "difficulty": "medium",
+    "type": "boolean"
+  },
+  {
+    "id": 26,
+    "name": "Celebrities (hard, multiple)",
+    "difficulty": "hard",
+    "type": "multiple"
+  },
+  {
+    "id": 26,
+    "name": "Celebrities (hard, boolean)",
+    "difficulty": "hard",
+    "type": "boolean"
+  },
+  {
+    "id": 27,
+    "name": "Animals (easy, multiple)",
+    "difficulty": "easy",
+    "type": "multiple"
+  },
+  {
+    "id": 27,
+    "name": "Animals (easy, boolean)",
+    "difficulty": "easy",
+    "type": "boolean"
+  },
+  {
+    "id": 27,
+    "name": "Animals (medium, multiple)",
+    "difficulty": "medium",
+    "type": "multiple"
+  },
+  {
+    "id": 27,
+    "name": "Animals (medium, boolean)",
+    "difficulty": "medium",
+    "type": "boolean"
+  },
+  {
+    "id": 27,
+    "name": "Animals (hard, multiple)",
+    "difficulty": "hard",
+    "type": "multiple"
+  },
+  {
+    "id": 27,
+    "name": "Animals (hard, boolean)",
+    "difficulty": "hard",
+    "type": "boolean"
+  },
+  {
+    "id": 28,
+    "name": "Vehicles (easy, multiple)",
+    "difficulty": "easy",
+    "type": "multiple"
+  },
+  {
+    "id": 28,
+    "name": "Vehicles (easy, boolean)",
+    "difficulty": "easy",
+    "type": "boolean"
+  },
+  {
+    "id": 28,
+    "name": "Vehicles (medium, multiple)",
+    "difficulty": "medium",
+    "type": "multiple"
+  },
+  {
+    "id": 28,
+    "name": "Vehicles (medium, boolean)",
+    "difficulty": "medium",
+    "type": "boolean"
+  },
+  {
+    "id": 28,
+    "name": "Vehicles (hard, multiple)",
+    "difficulty": "hard",
+    "type": "multiple"
+  },
+  {
+    "id": 28,
+    "name": "Vehicles (hard, boolean)",
+    "difficulty": "hard",
+    "type": "boolean"
+  },
+  {
+    "id": 29,
+    "name": "Entertainment: Comics (easy, multiple)",
+    "difficulty": "easy",
+    "type": "multiple"
+  },
+  {
+    "id": 29,
+    "name": "Entertainment: Comics (easy, boolean)",
+    "difficulty": "easy",
+    "type": "boolean"
+  },
+  {
+    "id": 29,
+    "name": "Entertainment: Comics (medium, multiple)",
+    "difficulty": "medium",
+    "type": "multiple"
+  },
+  {
+    "id": 29,
+    "name": "Entertainment: Comics (medium, boolean)",
+    "difficulty": "medium",
+    "type": "boolean"
+  },
+  {
+    "id": 29,
+    "name": "Entertainment: Comics (hard, multiple)",
+    "difficulty": "hard",
+    "type": "multiple"
+  },
+  {
+    "id": 29,
+    "name": "Entertainment: Comics (hard, boolean)",
+    "difficulty": "hard",
+    "type": "boolean"
+  },
+  {
+    "id": 30,
+    "name": "Science: Gadgets (easy, multiple)",
+    "difficulty": "easy",
+    "type": "multiple"
+  },
+  {
+    "id": 30,
+    "name": "Science: Gadgets (easy, boolean)",
+    "difficulty": "easy",
+    "type": "boolean"
+  },
+  {
+    "id": 30,
+    "name": "Science: Gadgets (medium, multiple)",
+    "difficulty": "medium",
+    "type": "multiple"
+  },
+  {
+    "id": 30,
+    "name": "Science: Gadgets (medium, boolean)",
+    "difficulty": "medium",
+    "type": "boolean"
+  },
+  {
+    "id": 30,
+    "name": "Science: Gadgets (hard, multiple)",
+    "difficulty": "hard",
+    "type": "multiple"
+  },
+  {
+    "id": 30,
+    "name": "Science: Gadgets (hard, boolean)",
+    "difficulty": "hard",
+    "type": "boolean"
+  },
+  {
+    "id": 31,
+    "name": "Entertainment: Japanese Anime & Manga (easy, multiple)",
+    "difficulty": "easy",
+    "type": "multiple"
+  },
+  {
+    "id": 31,
+    "name": "Entertainment: Japanese Anime & Manga (easy, boolean)",
+    "difficulty": "easy",
+    "type": "boolean"
+  },
+  {
+    "id": 31,
+    "name": "Entertainment: Japanese Anime & Manga (medium, multiple)",
+    "difficulty": "medium",
+    "type": "multiple"
+  },
+  {
+    "id": 31,
+    "name": "Entertainment: Japanese Anime & Manga (medium, boolean)",
+    "difficulty": "medium",
+    "type": "boolean"
+  },
+  {
+    "id": 31,
+    "name": "Entertainment: Japanese Anime & Manga (hard, multiple)",
+    "difficulty": "hard",
+    "type": "multiple"
+  },
+  {
+    "id": 31,
+    "name": "Entertainment: Japanese Anime & Manga (hard, boolean)",
+    "difficulty": "hard",
+    "type": "boolean"
+  },
+  {
+    "id": 32,
+    "name": "Entertainment: Cartoon & Animations (easy, multiple)",
+    "difficulty": "easy",
+    "type": "multiple"
+  },
+  {
+    "id": 32,
+    "name": "Entertainment: Cartoon & Animations (easy, boolean)",
+    "difficulty": "easy",
+    "type": "boolean"
+  },
+  {
+    "id": 32,
+    "name": "Entertainment: Cartoon & Animations (medium, multiple)",
+    "difficulty": "medium",
+    "type": "multiple"
+  },
+  {
+    "id": 32,
+    "name": "Entertainment: Cartoon & Animations (medium, boolean)",
+    "difficulty": "medium",
+    "type": "boolean"
+  },
+  {
+    "id": 32,
+    "name": "Entertainment: Cartoon & Animations (hard, multiple)",
+    "difficulty": "hard",
+    "type": "multiple"
+  },
+  {
+    "id": 32,
+    "name": "Entertainment: Cartoon & Animations (hard, boolean)",
+    "difficulty": "hard",
+    "type": "boolean"
+  }
+]

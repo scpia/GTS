@@ -3,76 +3,93 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Guess the Song</title>
+    <title>Errate den Song</title>
     <link rel="stylesheet" href="/static/spotify-style.css" />
-  </head>
-  <body>
-    <div class="container">
-      <h1>Battle der <br />Klang-Imperien</h1>
+</head>
+<body>
 
-      {% with messages = get_flashed_messages(with_categories=true) %} {% if
-      messages %} {% for category, message in messages %}
-      <div class="{{ category }}">{{ message }}</div>
-      {% endfor %} {% endif %} {% endwith %} {% if preview_url %}
-      <audio controls id="audio_player">
-        <source src="{{ preview_url }}" type="audio/mpeg" />
-        Your browser does not support the audio element.
-      </audio>
-      {% else %}
-      <p>Sorry, no preview available for this song.</p>
-      {% endif %}
+    <div class="main-container">
+        <div class="scoreboard-container">
+          <div class="scoreboard-section">
+              <h2>Your Score</h2>
+              <p>Current Score: {{ current_score }}</p>
+              <p>High Score: {{ high_score }}</p>
+              <a href="{{ url_for('scoreboard') }}" class="scoreboard-link">View Overall Scoreboard</a>
+          </div>
+      </div>
+    
 
-      <form action="{{ url_for('spotify_quiz') }}" method="POST">
-        <div class="spotify_quiz-input-container">
-          <label class="spotify_quiz-input-container-lable" for="song_guess"
-            >Welcher Track ist das?</label
-          >
-          <input
-            type="text"
-            id="song_guess"
-            name="song_guess"
-            required
-            autocomplete="off"
-          />
-          <div id="suggestions"></div>
+        <div class="quiz-container">
+            <h1>Errate den Song</h1>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            {% if preview_url %}
+                <audio controls id="audio_player">
+                    <source src="{{ preview_url }}" type="audio/mpeg" />
+                    Your browser does not support the audio element.
+                </audio>
+            {% else %}
+                <p>Sorry, no preview available for this song.</p>
+            {% endif %}
+            
+                  <!-- New section for artist info -->
+          <div class="artist-info-container">
+            <div id="artist-cover" style="background-image: url('{{ artist_cover }}');"></div>
+          </div>
+
+            <div class="quiz-form-section">
+                <form action="{{ url_for('spotify_quiz') }}" method="POST">
+                    <div class="spotify_quiz-input-container">
+                        <label class="spotify_quiz-input-container-label" for="song_guess">Welcher Track ist das?</label>
+                        <input type="text" id="song_guess" name="song_guess" required autocomplete="off" />
+                        <div id="suggestions"></div>
+                    </div>
+                    <input type="submit" value="Submit" />
+                </form>
+            </div>
         </div>
-        <input type="submit" value="Submit" />
-      </form>
     </div>
 
     <script>
       document.getElementById("audio_player").volume = 0.3; // Set default volume to 30%
 
-      document
-        .getElementById("song_guess")
-        .addEventListener("input", function () {
-          let query = this.value;
+        document.getElementById("song_guess").addEventListener("input", function () {
+    let query = this.value;
 
-          if (query.length > 1) {
-            // Start searching after 1 characters
-            fetch(`/search?q=${query}`)
-              .then((response) => response.json())
-              .then((data) => {
+    if (query.length > 1) {
+        // Start searching after 1 characters
+        fetch(`/search?q=${query}`)
+            .then(response => response.json())
+            .then(data => {
                 let suggestions = document.getElementById("suggestions");
                 suggestions.innerHTML = ""; // Clear previous suggestions
 
-                data.songs.forEach((song) => {
-                  let item = document.createElement("div");
-                  item.classList.add("suggestion-item");
-                  item.innerHTML = `<img src="${song.album_cover}" alt="Album cover"><span>${song.name} - ${song.artist}</span>`;
-                  item.onclick = function () {
-                    document.getElementById(
-                      "song_guess"
-                    ).value = `${song.name} - ${song.artist}`;
-                    suggestions.innerHTML = ""; // Clear suggestions after selection
-                  };
-                  suggestions.appendChild(item);
+                data.songs.forEach(song => {
+                    let item = document.createElement("div");
+                    item.classList.add("suggestion-item");
+                    item.innerHTML = `<img src="${song.album_cover}" alt="Album cover"><span>${song.name} - ${song.artist}</span>`;
+                    item.onclick = function () {
+                        document.getElementById("song_guess").value = `${song.name} - ${song.artist}`;
+                        suggestions.innerHTML = ""; // Clear suggestions after selection
+
+                        // Update artist info
+                        document.getElementById("artist-cover").style.backgroundImage = `url(${song.artist_cover})`;
+                        document.getElementById("artist-name").innerText = song.artist;
+                    };
+                    suggestions.appendChild(item);
                 });
-              });
-          } else {
-            document.getElementById("suggestions").innerHTML = ""; // Clear suggestions if query is too short
-          }
-        });
+            });
+    } else {
+        document.getElementById("suggestions").innerHTML = ""; // Clear suggestions if query is too short
+    }
+});
     </script>
   </body>
 </html>
