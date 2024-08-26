@@ -3,7 +3,6 @@ import re
 from flask_caching import Cache
 import spotipy, random, json, logging
 
-
 def get_spotify_client():
     token_info = session.get("token_info", None)
     if not token_info:

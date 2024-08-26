@@ -1,4 +1,3 @@
-from flask import session, flash
 from spotipy.oauth2 import SpotifyOAuth
 import lyricsgenius
 
@@ -10,5 +9,6 @@ SPOTIPY_REDIRECT_URI = "http://127.0.0.1:5000/callback"
 # Initialize Spotify OAuth
 sp_oauth = SpotifyOAuth(SPOTIPY_CLIENT_ID, SPOTIPY_CLIENT_SECRET, SPOTIPY_REDIRECT_URI, scope="user-library-read user-top-read")
 
+# Initialize Genius API
 GENIUS_API_TOKEN = "XKguZrxNgVgiJKbq096Dum4gRW1zbmuMfKRAIVPVTrqMGWf29IXAmypSbcsm3hGJ"
 genius_init = lyricsgenius.Genius(GENIUS_API_TOKEN)

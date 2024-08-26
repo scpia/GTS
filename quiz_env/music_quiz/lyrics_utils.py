@@ -2,8 +2,6 @@ from config import genius_init
 from spotify_utils import get_spotify_client
 import random
 
-
-
 def filter_lyrics(lyrics):
     """
     Entfernt unerwünschte Platzhalter wie [Hook] aus den Lyrics und unterteilt sie in Verse.
